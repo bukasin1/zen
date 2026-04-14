@@ -2,7 +2,7 @@ package framework
 
 import "net/http"
 
-type HandlerFunc func(http.ResponseWriter, *http.Request)
+type HandlerFunc func(*Context)
 
 type Router struct {
 	routes map[string]HandlerFunc
@@ -23,7 +23,8 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	key := req.Method + ":" + req.URL.Path
 
 	if handler, ok := r.routes[key]; ok {
-		handler(w, req)
+		ctx := NewContext(w, req)
+		handler(ctx)
 		return
 	}
 

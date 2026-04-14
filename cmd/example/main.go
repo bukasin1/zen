@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"net/http"
 
 	"github.com/Danieljosh-uduma/zen/pkg/framework"
 )
@@ -10,12 +9,16 @@ import (
 func main() {
 	app := framework.New()
 
-	app.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("server running"))
+	app.Get("/health", func(c *framework.Context) {
+		c.JSON(200, map[string]string{
+			"status": "server running",
+		})
 	})
 
-	app.Post("/healths", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("server running post"))
+	app.Post("/healths", func(c *framework.Context) {
+		c.JSON(200, map[string]string{
+			"status": "server running post",
+		})
 	})
 
 	log.Println("server starting on :8080")
