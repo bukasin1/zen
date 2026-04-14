@@ -26,6 +26,10 @@ func (a *App) Use(m Middleware) {
 	a.middlewares = append(a.middlewares, m)
 }
 
+func (a *App) UseSystem(m Middleware) {
+	a.systemMiddlewares = append(a.systemMiddlewares, m)
+}
+
 func (a *App) Get(path string, handler HandlerFunc) {
 	a.router.Handle(http.MethodGet, path, a.applyMiddlewares(handler))
 }

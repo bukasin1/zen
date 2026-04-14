@@ -1,16 +1,40 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/Danieljosh-uduma/zen/pkg/framework"
 )
+
+func TestMiddleware(handler framework.HandlerFunc) framework.HandlerFunc {
+	return func(c *framework.Context) {
+		fmt.Println("test api middleware")
+		handler(c)
+	}
+}
 
 func main() {
 	app := framework.New()
 
 	app.Use(framework.Recovery())
 	app.Use(framework.Logger())
+
+	api := app.Group("/api")
+	api.Use(TestMiddleware)
+	v1 := api.Group("/v1")
+
+	api.Get("/health", func(c *framework.Context) {
+		_ = c.JSON(200, map[string]string{
+			"status": "api running",
+		})
+	})
+
+	v1.Get("/users", func(c *framework.Context) {
+		_ = c.JSON(200, map[string]string{
+			"message": "users endpoint",
+		})
+	})
 
 	app.Get("/health", func(c *framework.Context) {
 		c.JSON(200, map[string]string{
