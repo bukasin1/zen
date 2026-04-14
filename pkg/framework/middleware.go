@@ -20,3 +20,20 @@ func Logger() Middleware {
 		}
 	}
 }
+
+func Recovery() Middleware {
+	return func(next HandlerFunc) HandlerFunc {
+		return func(c *Context) {
+			defer func() {
+				if err := recover(); err != nil {
+					_ = c.JSON(500, map[string]any{
+						"error":   "internal server error",
+						"details": err,
+					})
+				}
+			}()
+
+			next(c)
+		}
+	}
+}

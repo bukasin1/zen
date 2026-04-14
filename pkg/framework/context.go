@@ -27,3 +27,9 @@ func (c *Context) JSON(status int, data any) error {
 	c.Writer.WriteHeader(status)
 	return json.NewEncoder(c.Writer).Encode(data)
 }
+
+func (c *Context) Error(status int, message string) error {
+	return c.JSON(status, map[string]any{
+		"error": message,
+	})
+}
