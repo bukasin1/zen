@@ -5,21 +5,27 @@ import (
 )
 
 type App struct {
-	router *Router
+	router      *Router
+	middlewares []Middleware
 }
 
 func New() *App {
 	return &App{
-		router: NewRouter(),
+		router:      NewRouter(),
+		middlewares: []Middleware{},
 	}
 }
 
+func (a *App) Use(m Middleware) {
+	a.middlewares = append(a.middlewares, m)
+}
+
 func (a *App) Get(path string, handler HandlerFunc) {
-	a.router.Handle(http.MethodGet, path, handler)
+	a.router.Handle(http.MethodGet, path, chainMiddlewares(handler, a.middlewares))
 }
 
 func (a *App) Post(path string, handler HandlerFunc) {
-	a.router.Handle(http.MethodPost, path, handler)
+	a.router.Handle(http.MethodPost, path, chainMiddlewares(handler, a.middlewares))
 }
 
 func (a *App) Listen(addr string) error {

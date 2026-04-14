@@ -9,6 +9,8 @@ import (
 func main() {
 	app := framework.New()
 
+	app.Use(framework.Logger())
+
 	app.Get("/health", func(c *framework.Context) {
 		c.JSON(200, map[string]string{
 			"status": "server running",
