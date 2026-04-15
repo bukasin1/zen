@@ -2,6 +2,7 @@ package framework
 
 import (
 	"net/http"
+	"strings"
 )
 
 type HandlerFunc func(*Context)
@@ -31,29 +32,56 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 	})
 }
 
-func matchRoute(pattern, path string) bool {
-	return pattern == path[1:]
-}
+func matchRoute(pattern, path string) (bool, map[string]string) {
+	// check if match route path matches pattern and return a map of params
+	patternParts := strings.Split(pattern, "/")
+	pathParts := strings.Split(path[1:], "/")
 
-func (r *Router) FindRoute(method, path string) (HandlerFunc, bool) {
-	methodRoutes, ok := r.routes[method]
-	if !ok {
-		return nil, false
+	if len(patternParts) != len(pathParts) {
+		return false, nil
 	}
 
-	for _, routes := range methodRoutes {
-		matched := matchRoute(routes.pattern, path)
-		if matched {
-			return routes.handler, true
+	params := make(map[string]string)
+
+	for i := range patternParts {
+		part := patternParts[i]
+		value := pathParts[i]
+
+		// param part
+		if strings.HasPrefix(part, ":") {
+			params[part[1:]] = value
+			continue
+		}
+
+		// static part
+		if part != value {
+			return false, nil
 		}
 	}
 
-	return nil, false
+	return true, params
+}
+
+func (r *Router) FindRoute(method, path string) (HandlerFunc, map[string]string, bool) {
+	methodRoutes, ok := r.routes[method]
+	if !ok {
+		return nil, nil, false
+	}
+
+	for _, route := range methodRoutes {
+		matched, params := matchRoute(route.pattern, path)
+		if matched {
+			return route.handler, params, true
+		}
+	}
+
+	return nil, nil, false
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if handler, ok := r.FindRoute(req.Method, req.URL.Path); ok {
+	if handler, params, ok := r.FindRoute(req.Method, req.URL.Path); ok {
 		ctx := NewContext(w, req)
+		ctx.params = params
 		handler(ctx)
 		return
 	}

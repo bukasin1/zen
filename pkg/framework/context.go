@@ -8,6 +8,8 @@ import (
 type Context struct {
 	Writer  http.ResponseWriter
 	Request *http.Request
+
+	params map[string]string
 }
 
 func NewContext(w http.ResponseWriter, r *http.Request) *Context {
@@ -32,4 +34,8 @@ func (c *Context) Error(status int, message string) error {
 	return c.JSON(status, map[string]any{
 		"error": message,
 	})
+}
+
+func (c *Context) Param(key string) string {
+	return c.params[key]
 }

@@ -36,9 +36,21 @@ func main() {
 		})
 	})
 
+	v1.Get("/users/:id", func(c *framework.Context) {
+		c.JSON(200, map[string]string{
+			"id": c.Param("id"),
+		})
+	})
+
 	app.Get("/health", func(c *framework.Context) {
 		c.JSON(200, map[string]string{
 			"status": "server running",
+		})
+	})
+
+	app.Get("/users/:id", func(c *framework.Context) {
+		c.JSON(200, map[string]string{
+			"id": c.Param("id"),
 		})
 	})
 
