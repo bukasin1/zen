@@ -6,21 +6,33 @@ import (
 
 type HandlerFunc func(*Context)
 
+type route struct {
+	pattern string
+	handler HandlerFunc
+}
+
 type Router struct {
-	routes map[string]map[string]HandlerFunc
+	routes map[string][]route
 }
 
 func NewRouter() *Router {
 	return &Router{
-		routes: make(map[string]map[string]HandlerFunc),
+		routes: make(map[string][]route),
 	}
 }
 
 func (r *Router) Handle(method, path string, handler HandlerFunc) {
 	if _, ok := r.routes[method]; !ok {
-		r.routes[method] = make(map[string]HandlerFunc)
+		r.routes[method] = []route{}
 	}
-	r.routes[method][path] = handler
+	r.routes[method] = append(r.routes[method], route{
+		pattern: path[1:],
+		handler: handler,
+	})
+}
+
+func matchRoute(pattern, path string) bool {
+	return pattern == path[1:]
 }
 
 func (r *Router) FindRoute(method, path string) (HandlerFunc, bool) {
@@ -29,12 +41,14 @@ func (r *Router) FindRoute(method, path string) (HandlerFunc, bool) {
 		return nil, false
 	}
 
-	pathHandler, ok := methodRoutes[path]
-	if !ok {
-		return nil, false
+	for _, routes := range methodRoutes {
+		matched := matchRoute(routes.pattern, path)
+		if matched {
+			return routes.handler, true
+		}
 	}
 
-	return pathHandler, true
+	return nil, false
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
