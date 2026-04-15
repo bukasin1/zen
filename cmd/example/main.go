@@ -94,6 +94,18 @@ func main() {
 		panic("something went wrong post")
 	})
 
+	app.Get("/search", func(c *framework.Context) {
+		query := c.Query("q")
+		page := c.QueryDefault("page", "1")
+		auth := c.Header("Authorization")
+
+		c.JSON(200, map[string]string{
+			"query": query,
+			"page":  page,
+			"auth":  auth,
+		})
+	})
+
 	log.Println("server starting on :8080")
 
 	if err := app.Listen(":8080"); err != nil {
