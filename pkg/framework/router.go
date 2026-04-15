@@ -27,15 +27,18 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 		r.routes[method] = []route{}
 	}
 	r.routes[method] = append(r.routes[method], route{
-		pattern: path[1:],
+		pattern: path,
 		handler: handler,
 	})
 }
 
 func matchRoute(pattern, path string) (bool, map[string]string) {
 	// check if match route path matches pattern and return a map of params
+	pattern = strings.Trim(pattern, "/")
+	path = strings.Trim(path, "/")
+
 	patternParts := strings.Split(pattern, "/")
-	pathParts := strings.Split(path[1:], "/")
+	pathParts := strings.Split(path, "/")
 
 	if len(patternParts) != len(pathParts) {
 		return false, nil

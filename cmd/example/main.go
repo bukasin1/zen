@@ -14,6 +14,13 @@ func TestMiddleware(handler framework.HandlerFunc) framework.HandlerFunc {
 	}
 }
 
+func TestMiddleware2(handler framework.HandlerFunc) framework.HandlerFunc {
+	return func(c *framework.Context) {
+		fmt.Println("test api 2 middleware")
+		handler(c)
+	}
+}
+
 func main() {
 	app := framework.New()
 
@@ -23,6 +30,7 @@ func main() {
 	api := app.Group("/api")
 	api.Use(TestMiddleware)
 	v1 := api.Group("/v1")
+	v1.Use(TestMiddleware2)
 
 	api.Get("/health", func(c *framework.Context) {
 		_ = c.JSON(200, map[string]string{
@@ -37,8 +45,15 @@ func main() {
 	})
 
 	v1.Get("/users/:id", func(c *framework.Context) {
+		fmt.Println("user id endpoint")
 		c.JSON(200, map[string]string{
 			"id": c.Param("id"),
+		})
+	})
+
+	app.Get("/", func(c *framework.Context) {
+		c.JSON(200, map[string]string{
+			"status": "Welcome to Zen sample use!",
 		})
 	})
 
