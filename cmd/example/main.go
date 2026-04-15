@@ -63,13 +63,20 @@ func main() {
 		})
 	})
 
+	app.Post("/posts/:postId/comments/:commentId", func(c *framework.Context) {
+		c.JSON(200, map[string]string{
+			"postId":    c.Param("postId"),
+			"commentId": c.Param("commentId"),
+		})
+	})
+
 	app.Get("/users/:id", func(c *framework.Context) {
 		c.JSON(200, map[string]string{
 			"id": c.Param("id"),
 		})
 	})
 
-	app.Post("/healths", func(c *framework.Context) {
+	app.Post("/posts", func(c *framework.Context) {
 		c.JSON(200, map[string]string{
 			"status": "server running post",
 		})
