@@ -82,6 +82,35 @@ func main() {
 		})
 	})
 
+	type CreateUserRequest struct {
+		Name  string `json:"name"`
+		Email string `json:"email"`
+	}
+
+	app.Post("/users", func(c *framework.Context) {
+		var req CreateUserRequest
+
+		if err := c.BindJSON(&req); err != nil {
+			c.Error(400, err.Error())
+			return
+		}
+		fmt.Println("bindjson body unmarshalled:", req)
+
+		// rawReqBody, _ := c.Body()
+		// fmt.Println("body:", rawReqBody, string(rawReqBody))
+
+		// if err := json.Unmarshal(rawReqBody, &req); err != nil {
+		// 	c.Error(400, err.Error())
+		// 	return
+		// }
+		// fmt.Println("raw body unmarshalled:", req)
+
+		c.JSON(201, map[string]any{
+			"message": "user created",
+			"user":    req,
+		})
+	})
+
 	app.Get("/error", func(c *framework.Context) {
 		c.Error(500, "something went wrong")
 	})

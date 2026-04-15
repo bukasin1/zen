@@ -2,6 +2,8 @@ package framework
 
 import (
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 )
 
@@ -130,6 +132,49 @@ func (c *Context) HasHeader(key string) bool {
 // HeaderValues returns all values of the header with the given key.
 func (c *Context) HeaderValues(key string) []string {
 	return c.Request.Header.Values(key)
+}
+
+// Body returns the raw request body as a byte slice.
+func (c *Context) Body() ([]byte, error) {
+	if c.Request.Body == nil {
+		return nil, nil
+	}
+
+	defer c.Request.Body.Close()
+
+	return io.ReadAll(c.Request.Body)
+}
+
+// BindJSON binds the request body to the given target.
+// It returns an error if the request body is empty or invalid.
+func (c *Context) BindJSON(target any) error {
+	if c.Request.Body == nil {
+		return http.ErrBodyNotAllowed
+	}
+
+	defer c.Request.Body.Close()
+
+	decoder := json.NewDecoder(c.Request.Body)
+	decoder.DisallowUnknownFields()
+
+	err := decoder.Decode(target)
+	if err != nil {
+		return err
+	}
+
+	if decoder.More() {
+		return errors.New("request body must contain only one JSON object")
+	}
+
+	return nil
+}
+
+// MustBindJSON binds the request body to the given target.
+// It panics if the request body is empty or invalid.
+func (c *Context) MustBindJSON(target any) {
+	if err := c.BindJSON(target); err != nil {
+		panic(err)
+	}
 }
 
 // ------------------- Request Helpers End ----------------------------

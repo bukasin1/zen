@@ -12,7 +12,7 @@
 ## Router Evolution
 - [x] Phase 7 — Dynamic route parameters
 - [x] Phase 8 — Query param + header helpers
-- [ ] Phase 9 — Request body binding + JSON parsing
+- [x] Phase 9 — Request body binding + JSON parsing
 - [ ] Phase 10 — Static file serving
 - [ ] Phase 11 — Route trie optimization
 
