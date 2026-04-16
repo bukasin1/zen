@@ -42,17 +42,15 @@ func (a *App) Static(prefix, dir string) {
 	// This only needs to be done on the file server handler not the router
 	fs = http.StripPrefix(prefix, fs)
 
-	handler := a.wrapHTTPHandler(fs)
-
-	a.router.HandleStatic(prefix, handler)
+	a.router.HandleStatic(prefix, fs)
 }
 
 func (a *App) Get(path string, handler HandlerFunc) {
-	a.router.Handle(http.MethodGet, path, a.applyMiddlewares(handler))
+	a.router.Handle(http.MethodGet, path, handler)
 }
 
 func (a *App) Post(path string, handler HandlerFunc) {
-	a.router.Handle(http.MethodPost, path, a.applyMiddlewares(handler))
+	a.router.Handle(http.MethodPost, path, handler)
 }
 
 func (a *App) applyMiddlewares(h HandlerFunc) HandlerFunc {
@@ -61,19 +59,20 @@ func (a *App) applyMiddlewares(h HandlerFunc) HandlerFunc {
 	return h
 }
 
-func (a *App) wrapHTTPHandler(h http.Handler) http.Handler {
+func (a *App) buildAppHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := NewContext(w, r)
 
-		handleHttp := (func(c *Context) {
-			h.ServeHTTP(c.Writer, c.Request)
-		})
+		handler := func(c *Context) {
+			a.router.ServeHTTP(c.Writer, c.Request)
+		}
 
-		handleHttp = a.applyMiddlewares(handleHttp)
-		handleHttp(ctx)
+		handler = a.applyMiddlewares(handler)
+		handler(ctx)
 	})
 }
 
 func (a *App) Listen(addr string) error {
-	return http.ListenAndServe(addr, a.router)
+	handler := a.buildAppHandler()
+	return http.ListenAndServe(addr, handler)
 }

@@ -94,7 +94,7 @@ func (r *Router) FindRoute(method, path string) (HandlerFunc, map[string]string,
 	return nil, nil, false
 }
 
-func matchesStaticPrefix(path, prefix string) bool {
+func matchStaticPrefix(path, prefix string) bool {
 	path = "/" + strings.Trim(path, "/")
 	prefix = "/" + strings.Trim(prefix, "/")
 
@@ -115,11 +115,12 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	for _, static := range r.staticRoutes {
-		if matchesStaticPrefix(req.URL.Path, static.prefix) {
+		if matchStaticPrefix(req.URL.Path, static.prefix) {
 			static.handler.ServeHTTP(w, req)
 			return
 		}
 	}
 
-	http.NotFound(w, req)
+	ctx := NewContext(w, req)
+	ctx.Error(http.StatusNotFound, "404 page not found!")
 }

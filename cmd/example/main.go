@@ -52,7 +52,7 @@ func main() {
 	})
 
 	app.Static("/static", "./cmd/example/static")
-	app.Static("/", "./cmd/example/public")
+	// app.Static("/", "./cmd/example/public")
 
 	app.Get("/home", func(c *framework.Context) {
 		c.JSON(200, map[string]string{
