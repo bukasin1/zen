@@ -30,6 +30,10 @@ func (a *App) UseSystem(m Middleware) {
 	a.systemMiddlewares = append(a.systemMiddlewares, m)
 }
 
+func (a *App) Static(prefix, dir string) {
+	a.router.HandleStatic(prefix, dir)
+}
+
 func (a *App) Get(path string, handler HandlerFunc) {
 	a.router.Handle(http.MethodGet, path, a.applyMiddlewares(handler))
 }

@@ -51,7 +51,10 @@ func main() {
 		})
 	})
 
-	app.Get("/", func(c *framework.Context) {
+	app.Static("/static", "./cmd/example/static")
+	app.Static("/", "./cmd/example/public")
+
+	app.Get("/home", func(c *framework.Context) {
 		c.JSON(200, map[string]string{
 			"status": "Welcome to Zen sample use!",
 		})

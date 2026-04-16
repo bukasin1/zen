@@ -12,8 +12,14 @@ type route struct {
 	handler HandlerFunc
 }
 
+type staticRoute struct {
+	prefix  string
+	handler http.Handler
+}
+
 type Router struct {
-	routes map[string][]route
+	routes       map[string][]route
+	staticRoutes []staticRoute
 }
 
 func NewRouter() *Router {
@@ -29,6 +35,16 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 	r.routes[method] = append(r.routes[method], route{
 		pattern: path,
 		handler: handler,
+	})
+}
+
+func (r *Router) HandleStatic(prefix, dir string) {
+	fs := http.FileServer(http.Dir(dir))
+
+	prefix = "/" + strings.Trim(prefix, "/")
+	r.staticRoutes = append(r.staticRoutes, staticRoute{
+		prefix:  prefix,
+		handler: http.StripPrefix(prefix, fs),
 	})
 }
 
@@ -81,12 +97,31 @@ func (r *Router) FindRoute(method, path string) (HandlerFunc, map[string]string,
 	return nil, nil, false
 }
 
+func matchesStaticPrefix(path, prefix string) bool {
+	path = "/" + strings.Trim(path, "/")
+	prefix = "/" + strings.Trim(prefix, "/")
+
+	// root fallback matches everything
+	if prefix == "/" {
+		return true
+	}
+
+	return path == prefix || strings.HasPrefix(path, prefix+"/")
+}
+
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if handler, params, ok := r.FindRoute(req.Method, req.URL.Path); ok {
 		ctx := NewContext(w, req)
 		ctx.params = params
 		handler(ctx)
 		return
+	}
+
+	for _, static := range r.staticRoutes {
+		if matchesStaticPrefix(req.URL.Path, static.prefix) {
+			static.handler.ServeHTTP(w, req)
+			return
+		}
 	}
 
 	http.NotFound(w, req)
