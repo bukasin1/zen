@@ -31,7 +31,10 @@ func (a *App) UseSystem(m Middleware) {
 }
 
 func (a *App) Static(prefix, dir string) {
-	a.router.HandleStatic(prefix, dir)
+	fs := http.FileServer(http.Dir(dir))
+	handler := a.wrapHTTPHandler(fs)
+
+	a.router.HandleStatic(prefix, handler)
 }
 
 func (a *App) Get(path string, handler HandlerFunc) {
@@ -46,6 +49,19 @@ func (a *App) applyMiddlewares(h HandlerFunc) HandlerFunc {
 	h = chainMiddlewares(h, a.middlewares)
 	h = chainMiddlewares(h, a.systemMiddlewares)
 	return h
+}
+
+func (a *App) wrapHTTPHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := NewContext(w, r)
+
+		handleHttp := (func(c *Context) {
+			h.ServeHTTP(c.Writer, c.Request)
+		})
+
+		handleHttp = a.applyMiddlewares(handleHttp)
+		handleHttp(ctx)
+	})
 }
 
 func (a *App) Listen(addr string) error {

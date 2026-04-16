@@ -38,13 +38,11 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 	})
 }
 
-func (r *Router) HandleStatic(prefix, dir string) {
-	fs := http.FileServer(http.Dir(dir))
-
+func (r *Router) HandleStatic(prefix string, handler http.Handler) {
 	prefix = "/" + strings.Trim(prefix, "/")
 	r.staticRoutes = append(r.staticRoutes, staticRoute{
 		prefix:  prefix,
-		handler: http.StripPrefix(prefix, fs),
+		handler: http.StripPrefix(prefix, handler),
 	})
 }
 
