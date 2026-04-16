@@ -7,6 +7,26 @@ import (
 	"net/http"
 )
 
+type responseWriter struct {
+	http.ResponseWriter
+	status int
+	size   int
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.status = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
+func (rw *responseWriter) Write(b []byte) (int, error) {
+	if rw.status == 0 {
+		rw.status = http.StatusOK
+	}
+	n, err := rw.ResponseWriter.Write(b)
+	rw.size += n
+	return n, err
+}
+
 type Context struct {
 	Writer  http.ResponseWriter
 	Request *http.Request
@@ -15,13 +35,33 @@ type Context struct {
 }
 
 func NewContext(w http.ResponseWriter, r *http.Request) *Context {
+	rw := &responseWriter{
+		ResponseWriter: w,
+		status:         0,
+		// size:           0,
+	}
+
 	return &Context{
-		Writer:  w,
+		Writer:  rw,
 		Request: r,
 	}
 }
 
 // --------------- Response Writer Helpers ------------
+
+func (c *Context) StatusCode() int {
+	if rw, ok := c.Writer.(*responseWriter); ok {
+		return rw.status
+	}
+	return 0
+}
+
+func (c *Context) ResponseSize() int {
+	if rw, ok := c.Writer.(*responseWriter); ok {
+		return rw.size
+	}
+	return 0
+}
 
 // Status sets the status code of the response.
 func (c *Context) Status(code int) {

@@ -39,10 +39,9 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 }
 
 func (r *Router) HandleStatic(prefix string, handler http.Handler) {
-	prefix = "/" + strings.Trim(prefix, "/")
 	r.staticRoutes = append(r.staticRoutes, staticRoute{
 		prefix:  prefix,
-		handler: http.StripPrefix(prefix, handler),
+		handler: handler,
 	})
 }
 

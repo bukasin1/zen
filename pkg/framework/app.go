@@ -2,6 +2,7 @@ package framework
 
 import (
 	"net/http"
+	"strings"
 )
 
 type App struct {
@@ -32,6 +33,15 @@ func (a *App) UseSystem(m Middleware) {
 
 func (a *App) Static(prefix, dir string) {
 	fs := http.FileServer(http.Dir(dir))
+	prefix = "/" + strings.Trim(prefix, "/")
+
+	// Strip the prefix from the request path
+	// This is done so that the file server can find the files in the directory
+	// For example, if the prefix is "/static" and the request path is "/static/file.txt",
+	// the file server will look for "file.txt" in the directory.
+	// This only needs to be done on the file server handler not the router
+	fs = http.StripPrefix(prefix, fs)
+
 	handler := a.wrapHTTPHandler(fs)
 
 	a.router.HandleStatic(prefix, handler)

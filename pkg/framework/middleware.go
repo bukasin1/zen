@@ -1,6 +1,10 @@
 package framework
 
-import "log"
+import (
+	"fmt"
+	"net/http"
+	"time"
+)
 
 type Middleware func(HandlerFunc) HandlerFunc
 
@@ -15,8 +19,24 @@ func chainMiddlewares(h HandlerFunc, middlewares []Middleware) HandlerFunc {
 func Logger() Middleware {
 	return func(next HandlerFunc) HandlerFunc {
 		return func(c *Context) {
-			log.Println(c.Request.Method, c.Request.URL.Path)
+			start := time.Now()
+
 			next(c)
+
+			status := c.StatusCode()
+			if status == 0 {
+				status = http.StatusOK
+			}
+
+			fmt.Printf(
+				"%v: %-7s %s, %dB .....................................%d ---- %v\n",
+				time.Now().Format("2006-01-02 15:04:05"),
+				c.Request.Method,
+				c.Request.URL.Path,
+				c.ResponseSize(),
+				status,
+				time.Since(start),
+			)
 		}
 	}
 }
