@@ -13,7 +13,7 @@
 - [x] Phase 7 — Dynamic route parameters
 - [x] Phase 8 — Query param + header helpers
 - [x] Phase 9 — Request body binding + JSON parsing
-- [ ] Phase 10 — Static file serving
+- [x] Phase 10 — Static file serving
 - [ ] Phase 11 — Route trie optimization
 
 ## Advanced Architecture
