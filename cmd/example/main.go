@@ -24,8 +24,9 @@ func TestMiddleware2(handler framework.HandlerFunc) framework.HandlerFunc {
 func main() {
 	app := framework.New()
 
-	app.Use(framework.Recovery())
-	app.Use(framework.Logger())
+	// System middlewares are auto installed
+	// app.Use(framework.Recovery())
+	// app.Use(framework.Logger())
 
 	api := app.Group("/api")
 	api.Use(TestMiddleware)
@@ -67,7 +68,7 @@ func main() {
 	})
 
 	app.Post("/posts/:postId/comments/:commentId", func(c *framework.Context) {
-		c.JSON(200, map[string]string{
+		c.JSON(201, map[string]string{
 			"postId":    c.Param("postId"),
 			"commentId": c.Param("commentId"),
 		})

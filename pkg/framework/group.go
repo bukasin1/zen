@@ -32,12 +32,12 @@ func (g *Group) Use(m Middleware) {
 
 func (g *Group) Get(path string, handler HandlerFunc) {
 	fullPath, wrapped := g.wrapPathMiddleware(path, handler)
-	g.app.router.Handle(http.MethodGet, fullPath, g.app.applyMiddlewares(wrapped))
+	g.app.router.Handle(http.MethodGet, fullPath, wrapped)
 }
 
 func (g *Group) Post(path string, handler HandlerFunc) {
 	fullPath, wrapped := g.wrapPathMiddleware(path, handler)
-	g.app.router.Handle(http.MethodPost, fullPath, g.app.applyMiddlewares(wrapped))
+	g.app.router.Handle(http.MethodPost, fullPath, wrapped)
 }
 
 func (g *Group) wrapPathMiddleware(path string, handler HandlerFunc) (string, HandlerFunc) {

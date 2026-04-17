@@ -17,7 +17,7 @@ func New() *App {
 		router:      NewRouter(),
 		middlewares: []Middleware{},
 		// auto install system middlewares
-		systemMiddlewares: []Middleware{Recovery()},
+		systemMiddlewares: []Middleware{Logger(), Recovery()},
 	}
 
 	return app
