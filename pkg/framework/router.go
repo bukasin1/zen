@@ -116,9 +116,13 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 	validateRoutePath(path)
 	path, pathParts := getPathParts(normalizeRoutePath(path))
 
+	if _, ok := r.routeTrees[method]; !ok {
+		r.routeTrees[method] = &node{}
+	}
+
+	// TODO: cleanup(remove old routes registering)
 	if _, ok := r.routes[method]; !ok {
 		r.routes[method] = []route{}
-		r.routeTrees[method] = &node{}
 	}
 
 	currentMethodNode := r.routeTrees[method]
@@ -195,7 +199,7 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]string, bool) {
 	path, pathParts := getPathParts(path)
 
-	params := make(map[string]string)
+	var params map[string]string
 
 	currentMethodNode := methodNode
 	var paramValues []string
@@ -217,11 +221,14 @@ func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]stri
 		// 3. fallback to wildcard child
 		if currentMethodNode.wildcardChild != nil {
 			remainingPath := strings.Join(pathParts[i:], "/")
-			paramKey := currentMethodNode.wildcardChild.wildcardKey
-			if paramKey == "" {
-				paramKey = "*"
+			wildcardKey := currentMethodNode.wildcardChild.wildcardKey
+			if wildcardKey == "" {
+				wildcardKey = "*"
 			}
-			params[paramKey] = remainingPath
+			if params == nil {
+				params = make(map[string]string)
+			}
+			params[wildcardKey] = remainingPath
 			currentMethodNode = currentMethodNode.wildcardChild
 			break
 		}
@@ -235,6 +242,9 @@ func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]stri
 
 	for i, key := range currentMethodNode.paramKeys {
 		if i < len(paramValues) {
+			if params == nil {
+				params = make(map[string]string)
+			}
 			params[key] = paramValues[i]
 		}
 	}
