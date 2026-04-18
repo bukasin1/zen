@@ -47,6 +47,13 @@ func main() {
 		})
 	})
 
+	v1.Get("/posts/:id", func(c *framework.Context) {
+		_ = c.JSON(200, map[string]string{
+			"postId": c.Param("id"),
+			"params": fmt.Sprintf("%#v", c.Params()),
+		})
+	})
+
 	v1.Get("/users", func(c *framework.Context) {
 		_ = c.JSON(200, map[string]string{
 			"message": "users endpoint",
@@ -56,7 +63,8 @@ func main() {
 	v1.Get("/users/:id", func(c *framework.Context) {
 		fmt.Println("user id endpoint")
 		c.JSON(200, map[string]string{
-			"id": c.Param("id"),
+			"id":     c.Param("id"),
+			"params": fmt.Sprintf("%#v", c.Params()),
 		})
 	})
 

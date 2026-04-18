@@ -39,7 +39,19 @@ func NewRouter() *Router {
 	}
 }
 
+// validateRoute checks if the route path is valid.
+// Most importantly, it checks for valid wildcard patterns
+func validateRoute(path string) {
+	if strings.Contains(path, "**") {
+		panic("invalid route: double wildcard not allowed")
+	}
+	if strings.Contains(path, "*/") && !strings.HasSuffix(path, "*") {
+		panic("invalid route: wildcard must be last segment")
+	}
+}
+
 func (r *Router) Handle(method, path string, handler HandlerFunc) {
+	validateRoute(path)
 	path = strings.Trim(path, "/")
 	pathParts := strings.Split(path, "/")
 
