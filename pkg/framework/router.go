@@ -49,6 +49,7 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 
 	currentMethodNode := r.routeTrees[method]
 	for _, part := range pathParts {
+		// handle param (:)
 		if strings.HasPrefix(part, ":") {
 			// check if param child exists
 			if currentMethodNode.paramChild == nil {
@@ -57,17 +58,19 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 				}
 			}
 			currentMethodNode = currentMethodNode.paramChild
-		} else {
-			// initialize children map if nil
-			if currentMethodNode.children == nil {
-				currentMethodNode.children = make(map[string]*node)
-			}
-			// check if child exists
-			if _, ok := currentMethodNode.children[part]; !ok {
-				currentMethodNode.children[part] = &node{}
-			}
-			currentMethodNode = currentMethodNode.children[part]
+			continue
 		}
+
+		// handle static
+		// initialize children map if nil
+		if currentMethodNode.children == nil {
+			currentMethodNode.children = make(map[string]*node)
+		}
+		// check if child exists
+		if _, ok := currentMethodNode.children[part]; !ok {
+			currentMethodNode.children[part] = &node{}
+		}
+		currentMethodNode = currentMethodNode.children[part]
 	}
 
 	// set handler
