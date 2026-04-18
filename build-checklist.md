@@ -15,6 +15,7 @@
 - [x] Phase 9 — Request body binding + JSON parsing
 - [x] Phase 10 — Static file serving
 - [x] Phase 11 — Route trie optimization
+- [x] Phase 11.5 — Router hardening
 
 ## Advanced Architecture
 - [ ] Phase 12 — Dependency injection container
