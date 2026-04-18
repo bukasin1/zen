@@ -1,6 +1,7 @@
 package framework
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 )
@@ -31,7 +32,7 @@ func (a *App) UseSystem(m Middleware) {
 	a.systemMiddlewares = append(a.systemMiddlewares, m)
 }
 
-func (a *App) Static(prefix, dir string) {
+func (a *App) StaticOld(prefix, dir string) {
 	fs := http.FileServer(http.Dir(dir))
 	prefix = "/" + strings.Trim(prefix, "/")
 
@@ -43,6 +44,25 @@ func (a *App) Static(prefix, dir string) {
 	fs = http.StripPrefix(prefix, fs)
 
 	a.router.HandleStatic(prefix, fs)
+}
+
+func (a *App) Static(path, dir string) {
+	fs := http.FileServer(http.Dir(dir))
+	fmt.Println("static path before", path)
+	prefix := "/" + strings.Trim(path, "/*")
+
+	fmt.Println("static prefix after", prefix, path)
+
+	// Strip the prefix from the request path
+	// This is done so that the file server can find the files in the directory
+	// For example, if the prefix is "/static" and the request path is "/static/file.txt",
+	// the file server will look for "file.txt" in the directory.
+	// This only needs to be done on the file server handler not the router
+	fs = http.StripPrefix(prefix, fs)
+
+	a.router.Handle(http.MethodGet, path, HandlerFunc(func(ctx *Context) {
+		fs.ServeHTTP(ctx.Writer, ctx.Request)
+	}))
 }
 
 func (a *App) Get(path string, handler HandlerFunc) {

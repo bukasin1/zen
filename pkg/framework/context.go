@@ -133,6 +133,11 @@ func (c *Context) Param(key string) string {
 	return c.params[key]
 }
 
+// Params returns all route parameters.
+func (c *Context) Params() map[string]string {
+	return c.params
+}
+
 // Query returns the value of the query parameter with the given key.
 func (c *Context) Query(key string) string {
 	return c.Request.URL.Query().Get(key)

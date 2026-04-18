@@ -39,6 +39,14 @@ func main() {
 		})
 	})
 
+	v1.Get("/posts/*", func(c *framework.Context) {
+		_ = c.JSON(200, map[string]string{
+			"message": "posts endpoint",
+			"path":    c.Request.URL.Path,
+			"params":  fmt.Sprintf("%#v", c.Params()),
+		})
+	})
+
 	v1.Get("/users", func(c *framework.Context) {
 		_ = c.JSON(200, map[string]string{
 			"message": "users endpoint",
@@ -59,7 +67,8 @@ func main() {
 		})
 	})
 
-	app.Static("/static", "./cmd/example/static")
+	app.Static("/static/*", "./cmd/example/static")
+	app.StaticOld("/static2", "./cmd/example/static")
 	// app.Static("/", "./cmd/example/public")
 
 	app.Get("/home", func(c *framework.Context) {

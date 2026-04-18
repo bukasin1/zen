@@ -8,8 +8,9 @@ import (
 type HandlerFunc func(*Context)
 
 type node struct {
-	children   map[string]*node
-	paramChild *node
+	children      map[string]*node // static
+	paramChild    *node            // :id
+	wildcardChild *node            // * or *filepath
 
 	handler  HandlerFunc
 	paramKey string
@@ -48,7 +49,24 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 	}
 
 	currentMethodNode := r.routeTrees[method]
-	for _, part := range pathParts {
+	for i, part := range pathParts {
+		// wildcard
+		if strings.HasPrefix(part, "*") {
+			// enforce last segment
+			if i != len(pathParts)-1 {
+				panic("wildcard must be the last segment")
+			}
+
+			if currentMethodNode.wildcardChild == nil {
+				currentMethodNode.wildcardChild = &node{
+					paramKey: strings.TrimPrefix(part, "*"),
+				}
+			}
+
+			currentMethodNode = currentMethodNode.wildcardChild
+			break
+		}
+
 		// handle param (:)
 		if strings.HasPrefix(part, ":") {
 			// check if param child exists
@@ -129,7 +147,7 @@ func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]stri
 	params := make(map[string]string)
 
 	currentMethodNode := methodNode
-	for _, part := range pathParts {
+	for i, part := range pathParts {
 		// 1.check if child exists for static part first (takes priority)
 		if child, ok := currentMethodNode.children[part]; ok {
 			currentMethodNode = child
@@ -141,6 +159,18 @@ func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]stri
 			params[currentMethodNode.paramChild.paramKey] = part
 			currentMethodNode = currentMethodNode.paramChild
 			continue
+		}
+
+		// 3. fallback to wildcard child
+		if currentMethodNode.wildcardChild != nil {
+			remainingPath := strings.Join(pathParts[i:], "/")
+			paramKey := currentMethodNode.wildcardChild.paramKey
+			if paramKey == "" {
+				paramKey = "*"
+			}
+			params[paramKey] = remainingPath
+			currentMethodNode = currentMethodNode.wildcardChild
+			break
 		}
 
 		return nil, nil, false
@@ -201,4 +231,6 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	ctx := NewContext(w, req)
 	ctx.Error(http.StatusNotFound, "404 page not found!")
+
+	// http.NotFound(w, req)
 }
