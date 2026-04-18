@@ -52,6 +52,13 @@ func main() {
 		})
 	})
 
+	v1.Get("/users/me", func(c *framework.Context) {
+		fmt.Println("user me endpoint")
+		c.JSON(200, map[string]string{
+			"message": "user me endpoint",
+		})
+	})
+
 	app.Static("/static", "./cmd/example/static")
 	// app.Static("/", "./cmd/example/public")
 
