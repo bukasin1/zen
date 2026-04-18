@@ -1,7 +1,6 @@
 package framework
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 )
@@ -48,10 +47,7 @@ func (a *App) StaticOld(prefix, dir string) {
 
 func (a *App) Static(path, dir string) {
 	fs := http.FileServer(http.Dir(dir))
-	fmt.Println("static path before", path)
 	prefix := "/" + strings.Trim(path, "/*")
-
-	fmt.Println("static prefix after", prefix, path)
 
 	// Strip the prefix from the request path
 	// This is done so that the file server can find the files in the directory
