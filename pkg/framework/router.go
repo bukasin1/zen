@@ -8,10 +8,10 @@ import (
 type HandlerFunc func(*Context)
 
 type node struct {
-	part     string
-	children []*node
+	children   map[string]*node
+	paramChild *node
+
 	handler  HandlerFunc
-	isParam  bool
 	paramKey string
 }
 
@@ -49,34 +49,25 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 
 	currentMethodNode := r.routeTrees[method]
 	for _, part := range pathParts {
-		var child *node
-
-		// check if child exists
-		for _, c := range currentMethodNode.children {
-			if c.part == part {
-				child = c
-				break
+		if strings.HasPrefix(part, ":") {
+			// check if param child exists
+			if currentMethodNode.paramChild == nil {
+				currentMethodNode.paramChild = &node{
+					paramKey: part[1:],
+				}
 			}
-			if strings.HasPrefix(part, ":") && c.isParam {
-				child = c
-				break
+			currentMethodNode = currentMethodNode.paramChild
+		} else {
+			// initialize children map if nil
+			if currentMethodNode.children == nil {
+				currentMethodNode.children = make(map[string]*node)
 			}
+			// check if child exists
+			if _, ok := currentMethodNode.children[part]; !ok {
+				currentMethodNode.children[part] = &node{}
+			}
+			currentMethodNode = currentMethodNode.children[part]
 		}
-
-		// if child doesn't exist, create it
-		if child == nil {
-			child = &node{
-				part: part,
-			}
-			if strings.HasPrefix(part, ":") {
-				child.isParam = true
-				child.paramKey = part[1:]
-			}
-			currentMethodNode.children = append(currentMethodNode.children, child)
-		}
-
-		// move to child
-		currentMethodNode = child
 	}
 
 	// set handler
@@ -136,27 +127,20 @@ func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]stri
 
 	currentMethodNode := methodNode
 	for _, part := range pathParts {
-		// find child node that matches the current part
-		var matchedChild *node
-		for _, child := range currentMethodNode.children {
-			if child.part == part || child.isParam {
-				matchedChild = child
-				break
-			}
+		// 1.check if child exists for static part first (takes priority)
+		if child, ok := currentMethodNode.children[part]; ok {
+			currentMethodNode = child
+			continue
 		}
 
-		// if no child matched, return false
-		if matchedChild == nil {
-			return nil, nil, false
+		// 2. fallback to param child
+		if currentMethodNode.paramChild != nil {
+			params[currentMethodNode.paramChild.paramKey] = part
+			currentMethodNode = currentMethodNode.paramChild
+			continue
 		}
 
-		// if the matched child is a param, add it to the params map
-		if matchedChild.isParam {
-			params[matchedChild.paramKey] = part
-		}
-
-		// move to the matched child
-		currentMethodNode = matchedChild
+		return nil, nil, false
 	}
 
 	return currentMethodNode.handler, params, true
