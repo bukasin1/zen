@@ -31,6 +31,8 @@ func (a *App) UseSystem(m Middleware) {
 	a.systemMiddlewares = append(a.systemMiddlewares, m)
 }
 
+// Deprecated: use Static instead
+// TODO: remove this function
 func (a *App) StaticOld(prefix, dir string) {
 	fs := http.FileServer(http.Dir(dir))
 	prefix = "/" + strings.Trim(prefix, "/")

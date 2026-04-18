@@ -63,6 +63,9 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 				}
 			}
 
+			// set handler to base wildcard parent node
+			currentMethodNode.handler = handler
+
 			currentMethodNode = currentMethodNode.wildcardChild
 			break
 		}
@@ -100,6 +103,8 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 	})
 }
 
+// Deprecated: use Static instead
+// TODO: remove this function
 func (r *Router) HandleStatic(prefix string, handler http.Handler) {
 	r.staticRoutes = append(r.staticRoutes, staticRoute{
 		prefix:  prefix,
@@ -107,6 +112,8 @@ func (r *Router) HandleStatic(prefix string, handler http.Handler) {
 	})
 }
 
+// Deprecated: use matchRouteTree instead
+// TODO: remove this function
 func matchRoute(pattern, path string) (bool, map[string]string) {
 	// check if match route path matches pattern and return a map of params
 	pattern = strings.Trim(pattern, "/")
@@ -202,6 +209,8 @@ func (r *Router) FindRoute(method, path string) (HandlerFunc, map[string]string,
 	return matchRouteTree(methodNode, path)
 }
 
+// Deprecated: use Static instead
+// TODO: remove this function
 func matchStaticPrefix(path, prefix string) bool {
 	path = "/" + strings.Trim(path, "/")
 	prefix = "/" + strings.Trim(prefix, "/")
