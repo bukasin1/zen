@@ -27,6 +27,17 @@ func normalizeRoutePath(path string) string {
 	return path
 }
 
+func getPathParts(path string) (string, []string) {
+	path = strings.Trim(path, "/")
+	var pathParts []string
+	if path == "" {
+		pathParts = []string{}
+	} else {
+		pathParts = strings.Split(path, "/")
+	}
+	return path, pathParts
+}
+
 // validateRoute checks if the route path is valid.
 // Most importantly, it checks for valid wildcard patterns
 func validateRoutePath(path string) {
@@ -49,12 +60,14 @@ func cloneParams(p map[string]string) map[string]string {
 type HandlerFunc func(*Context)
 
 type node struct {
+	segment       string
 	children      map[string]*node // static
 	paramChild    *node            // :id
 	wildcardChild *node            // * or *filepath
 
-	handler  HandlerFunc
-	paramKey string
+	handler     HandlerFunc
+	wildcardKey string
+	paramKeys   []string
 }
 
 type cacheKey struct {
@@ -97,12 +110,11 @@ func NewRouter() *Router {
 }
 
 func (r *Router) Handle(method, path string, handler HandlerFunc) {
+	// invalkidate route cache on new route registration
+	r.cache = make(map[cacheKey]cachedRoute)
 	// normalize path to handle multiple slashes and trailing slashes
-	path = normalizeRoutePath(path)
 	validateRoutePath(path)
-
-	path = strings.Trim(path, "/")
-	pathParts := strings.Split(path, "/")
+	path, pathParts := getPathParts(normalizeRoutePath(path))
 
 	if _, ok := r.routes[method]; !ok {
 		r.routes[method] = []route{}
@@ -110,6 +122,8 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 	}
 
 	currentMethodNode := r.routeTrees[method]
+	var paramKeys []string
+
 	for i, part := range pathParts {
 		// wildcard
 		if strings.HasPrefix(part, "*") {
@@ -123,11 +137,14 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 			}
 
 			currentMethodNode.wildcardChild = &node{
-				paramKey: strings.TrimPrefix(part, "*"),
+				segment:     part,
+				wildcardKey: strings.TrimPrefix(part, "*"),
 			}
 
 			// set handler to base wildcard parent node
-			currentMethodNode.handler = handler
+			if currentMethodNode.handler == nil {
+				currentMethodNode.handler = handler
+			}
 
 			currentMethodNode = currentMethodNode.wildcardChild
 			break
@@ -135,15 +152,14 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 
 		// handle param (:)
 		if strings.HasPrefix(part, ":") {
+			paramKeys = append(paramKeys, part[1:])
+
 			// check if param child exists
-			if currentMethodNode.paramChild != nil {
-				panic("conflicting param route at same segment")
+			if currentMethodNode.paramChild == nil {
+				currentMethodNode.paramChild = &node{
+					segment: part,
+				}
 			}
-
-			currentMethodNode.paramChild = &node{
-				paramKey: part[1:],
-			}
-
 			currentMethodNode = currentMethodNode.paramChild
 			continue
 		}
@@ -155,7 +171,9 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 		}
 		// check if child exists
 		if _, ok := currentMethodNode.children[part]; !ok {
-			currentMethodNode.children[part] = &node{}
+			currentMethodNode.children[part] = &node{
+				segment: part,
+			}
 		}
 		currentMethodNode = currentMethodNode.children[part]
 	}
@@ -165,6 +183,7 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 		panic("duplicate route registration")
 	}
 	currentMethodNode.handler = handler
+	currentMethodNode.paramKeys = paramKeys
 
 	// TODO: cleanup(remove old routes registering)
 	r.routes[method] = append(r.routes[method], route{
@@ -174,12 +193,13 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 }
 
 func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]string, bool) {
-	path = strings.Trim(path, "/")
-	pathParts := strings.Split(path, "/")
+	path, pathParts := getPathParts(path)
 
 	params := make(map[string]string)
 
 	currentMethodNode := methodNode
+	var paramValues []string
+
 	for i, part := range pathParts {
 		// 1.check if child exists for static part first (takes priority)
 		if child, ok := currentMethodNode.children[part]; ok {
@@ -189,7 +209,7 @@ func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]stri
 
 		// 2. fallback to param child
 		if currentMethodNode.paramChild != nil {
-			params[currentMethodNode.paramChild.paramKey] = part
+			paramValues = append(paramValues, part)
 			currentMethodNode = currentMethodNode.paramChild
 			continue
 		}
@@ -197,7 +217,7 @@ func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]stri
 		// 3. fallback to wildcard child
 		if currentMethodNode.wildcardChild != nil {
 			remainingPath := strings.Join(pathParts[i:], "/")
-			paramKey := currentMethodNode.wildcardChild.paramKey
+			paramKey := currentMethodNode.wildcardChild.wildcardKey
 			if paramKey == "" {
 				paramKey = "*"
 			}
@@ -211,6 +231,12 @@ func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]stri
 
 	if currentMethodNode.handler == nil {
 		return nil, nil, false
+	}
+
+	for i, key := range currentMethodNode.paramKeys {
+		if i < len(paramValues) {
+			params[key] = paramValues[i]
+		}
 	}
 
 	return currentMethodNode.handler, params, true
@@ -227,7 +253,7 @@ func (r *Router) FindRoute(method, path string) (HandlerFunc, map[string]string,
 
 	// check cache first
 	if cachedRoute, ok := r.cache[pathCacheKey]; ok {
-		return cachedRoute.handler, cachedRoute.params, true
+		return cachedRoute.handler, cloneParams(cachedRoute.params), true
 	}
 
 	methodNode, ok := r.routeTrees[method]
@@ -254,7 +280,6 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		ctx := NewContext(w, req)
 		ctx.params = params
 		handler(ctx)
-		// log.Println(req.Method, req.URL.Path, req.Response, "in router")
 		return
 	}
 
