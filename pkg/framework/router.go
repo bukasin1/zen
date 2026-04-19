@@ -390,6 +390,8 @@ func (r *Router) HandleStatic(prefix string, handler http.Handler) {
 // Deprecated: use Handle instead
 // TODO: remove this function
 func (r *Router) HandleOld(method, path string, handler HandlerFunc) {
+	path = normalizeRoutePath(path)
+
 	if r.routes == nil {
 		r.routes = make(map[string][]route)
 	}
