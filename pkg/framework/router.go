@@ -103,14 +103,11 @@ func NewRouter() *Router {
 	return &Router{
 		routeTrees: make(map[string]*node),
 		cache:      make(map[cacheKey]cachedRoute),
-
-		// TODO: cleanup(remove old routes registering)
-		routes: make(map[string][]route),
 	}
 }
 
 func (r *Router) Handle(method, path string, handler HandlerFunc) {
-	// invalkidate route cache on new route registration
+	// invalidate route cache on new route registration
 	r.cache = make(map[cacheKey]cachedRoute)
 	// normalize path to handle multiple slashes and trailing slashes
 	validateRoutePath(path)
@@ -118,11 +115,6 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 
 	if _, ok := r.routeTrees[method]; !ok {
 		r.routeTrees[method] = &node{}
-	}
-
-	// TODO: cleanup(remove old routes registering)
-	if _, ok := r.routes[method]; !ok {
-		r.routes[method] = []route{}
 	}
 
 	currentMethodNode := r.routeTrees[method]
@@ -188,12 +180,6 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 	}
 	currentMethodNode.handler = handler
 	currentMethodNode.paramKeys = paramKeys
-
-	// TODO: cleanup(remove old routes registering)
-	r.routes[method] = append(r.routes[method], route{
-		pattern: path,
-		handler: handler,
-	})
 }
 
 func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]string, bool) {
@@ -293,6 +279,24 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	ctx := NewContext(w, req)
+	ctx.Error(http.StatusNotFound, "404 page not found!")
+
+	// http.NotFound(w, req)
+}
+
+// --------------------------- Deprecated Functions ---------------------------------
+
+// Deprecated: meant for removal
+// TODO: (for clean up) remove this function
+func (r *Router) ServeHTTPOld(w http.ResponseWriter, req *http.Request) {
+	if handler, params, ok := r.FindRouteOld(req.Method, req.URL.Path); ok {
+		ctx := NewContext(w, req)
+		ctx.params = params
+		handler(ctx)
+		return
+	}
+
 	for _, static := range r.staticRoutes {
 		if matchStaticPrefix(req.URL.Path, static.prefix) {
 			static.handler.ServeHTTP(w, req)
@@ -302,8 +306,6 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	ctx := NewContext(w, req)
 	ctx.Error(http.StatusNotFound, "404 page not found!")
-
-	// http.NotFound(w, req)
 }
 
 // Deprecated: use Static instead
@@ -320,13 +322,25 @@ func matchStaticPrefix(path, prefix string) bool {
 	return path == prefix || strings.HasPrefix(path, prefix+"/")
 }
 
-// Deprecated: use Static instead
+// Deprecated: use FindRoute instead
 // TODO: remove this function
-func (r *Router) HandleStatic(prefix string, handler http.Handler) {
-	r.staticRoutes = append(r.staticRoutes, staticRoute{
-		prefix:  prefix,
-		handler: handler,
-	})
+func (r *Router) FindRouteOld(method, path string) (HandlerFunc, map[string]string, bool) {
+	// normalize path to handle multiple slashes and trailing slashes
+	path = normalizeRoutePath(path)
+
+	methodRoutes, ok := r.routes[method]
+	if !ok {
+		return nil, nil, false
+	}
+
+	for _, route := range methodRoutes {
+		matched, params := matchRoute(route.pattern, path)
+		if matched {
+			return route.handler, params, true
+		}
+	}
+
+	return nil, nil, false
 }
 
 // Deprecated: use matchRouteTree instead
@@ -364,23 +378,27 @@ func matchRoute(pattern, path string) (bool, map[string]string) {
 	return true, params
 }
 
-// Deprecated: use FindRoute instead
+// Deprecated: use Static instead
 // TODO: remove this function
-func (r *Router) FindRouteOld(method, path string) (HandlerFunc, map[string]string, bool) {
-	// normalize path to handle multiple slashes and trailing slashes
-	path = normalizeRoutePath(path)
+func (r *Router) HandleStatic(prefix string, handler http.Handler) {
+	r.staticRoutes = append(r.staticRoutes, staticRoute{
+		prefix:  prefix,
+		handler: handler,
+	})
+}
 
-	methodRoutes, ok := r.routes[method]
-	if !ok {
-		return nil, nil, false
+// Deprecated: use Handle instead
+// TODO: remove this function
+func (r *Router) HandleOld(method, path string, handler HandlerFunc) {
+	if r.routes == nil {
+		r.routes = make(map[string][]route)
 	}
 
-	for _, route := range methodRoutes {
-		matched, params := matchRoute(route.pattern, path)
-		if matched {
-			return route.handler, params, true
-		}
+	if _, ok := r.routes[method]; !ok {
+		r.routes[method] = []route{}
 	}
-
-	return nil, nil, false
+	r.routes[method] = append(r.routes[method], route{
+		pattern: path,
+		handler: handler,
+	})
 }
