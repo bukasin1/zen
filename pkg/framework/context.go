@@ -1,12 +1,17 @@
 package framework
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
 	"time"
 )
+
+type contextKey string
+
+const RequestIDKey contextKey = "requestID"
 
 type responseWriter struct {
 	http.ResponseWriter
@@ -46,11 +51,20 @@ func NewContext(w http.ResponseWriter, r *http.Request) *Context {
 		// size:           0,
 	}
 
+	// ✅ generate request ID first
+	requestID := generateRequestID()
+
+	// ✅ attach to standard Go context
+	ctx := context.WithValue(r.Context(), RequestIDKey, requestID)
+
+	// ✅ replace request with new context-aware request
+	r = r.WithContext(ctx)
+
 	return &Context{
 		Writer:  rw,
 		Request: r,
 
-		requestID: generateRequestID(),
+		requestID: requestID,
 		startTime: time.Now(),
 	}
 }
@@ -234,6 +248,12 @@ func (c *Context) MustBindJSON(target any) {
 
 // ----------------- Context Helpers ----------------------------
 
+// StdContext returns the request standard context
+func (c *Context) StdContext() context.Context {
+	return c.Request.Context()
+}
+
+// Set sets a value in the context.
 func (c *Context) Set(key string, value interface{}) {
 	if c.keys == nil {
 		c.keys = make(map[string]interface{})
@@ -241,6 +261,7 @@ func (c *Context) Set(key string, value interface{}) {
 	c.keys[key] = value
 }
 
+// Get returns a value from the context.
 func (c *Context) Get(key string) (interface{}, bool) {
 	if c.keys == nil {
 		return nil, false
@@ -249,6 +270,8 @@ func (c *Context) Get(key string) (interface{}, bool) {
 	return val, ok
 }
 
+// MustGet returns a value from the context.
+// It panics if the value is not found.
 func (c *Context) MustGet(key string) interface{} {
 	val, ok := c.Get(key)
 	if !ok {
@@ -257,14 +280,17 @@ func (c *Context) MustGet(key string) interface{} {
 	return val
 }
 
+// RequestID returns the request ID.
 func (c *Context) RequestID() string {
 	return c.requestID
 }
 
+// StartTime returns the request start time.
 func (c *Context) StartTime() time.Time {
 	return c.startTime
 }
 
+// Duration returns the request duration.
 func (c *Context) Duration() time.Duration {
 	return time.Since(c.startTime)
 }
