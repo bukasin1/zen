@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/errors"
 )
 
 type Middleware func(HandlerFunc) HandlerFunc
@@ -20,11 +22,18 @@ func Recovery() Middleware {
 	return func(next HandlerFunc) HandlerFunc {
 		return func(c *Context) {
 			defer func() {
-				if err := recover(); err != nil {
-					_ = c.JSON(500, map[string]any{
-						"error":   "internal server error",
-						"details": err,
-					})
+				if rec := recover(); rec != nil {
+					switch err := rec.(type) {
+
+					case *errors.AppError:
+						c.Error(err.Status, err.Message, err.Code, err.Details)
+
+					case error:
+						c.Error(500, err.Error(), "INTERNAL_ERROR!", nil)
+
+					default:
+						c.Error(500, "internal server error", "INTERNAL_ERROR", rec)
+					}
 				}
 			}()
 

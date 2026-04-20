@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/response"
 )
 
 type contextKey string
@@ -128,11 +130,48 @@ func (c *Context) HTML(status int, html string) error {
 	return err
 }
 
+func (c *Context) Success(status int, data any) {
+	resp := response.SuccessResponse{
+		Success: true,
+		Data:    data,
+	}
+
+	c.JSON(status, resp)
+}
+
+func (c *Context) SuccessWithMeta(status int, data any, meta any) {
+	resp := response.SuccessResponse{
+		Success: true,
+		Data:    data,
+		Meta:    meta,
+	}
+
+	c.JSON(status, resp)
+}
+
+func (c *Context) Fail(status int, message string) {
+	resp := response.ErrorResponse{
+		Success: false,
+		Error: response.ErrorDetail{
+			Message: message,
+		},
+	}
+
+	c.JSON(status, resp)
+}
+
 // Error writes an error response to the client.
-func (c *Context) Error(status int, message string) error {
-	return c.JSON(status, map[string]any{
-		"error": message,
-	})
+func (c *Context) Error(status int, message string, code string, details any) {
+	resp := response.ErrorResponse{
+		Success: false,
+		Error: response.ErrorDetail{
+			Message: message,
+			Code:    code,
+			Details: details,
+		},
+	}
+
+	c.JSON(status, resp)
 }
 
 // Redirect redirects the client to the given URL with the given status code.

@@ -280,7 +280,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	ctx := NewContext(w, req)
-	ctx.Error(http.StatusNotFound, "404 page not found!")
+	ctx.Fail(http.StatusNotFound, "404 page not found!")
 
 	// http.NotFound(w, req)
 }
@@ -305,7 +305,7 @@ func (r *Router) ServeHTTPOld(w http.ResponseWriter, req *http.Request) {
 	}
 
 	ctx := NewContext(w, req)
-	ctx.Error(http.StatusNotFound, "404 page not found!")
+	ctx.Fail(http.StatusNotFound, "404 page not found!")
 }
 
 // Deprecated: use Static instead

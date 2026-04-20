@@ -119,7 +119,7 @@ func main() {
 		var req CreateUserRequest
 
 		if err := c.BindJSON(&req); err != nil {
-			c.Error(400, err.Error())
+			c.Fail(400, err.Error())
 			return
 		}
 		fmt.Println("bindjson body unmarshalled:", req)
@@ -140,7 +140,7 @@ func main() {
 	})
 
 	app.Get("/error", func(c *framework.Context) {
-		c.Error(500, "something went wrong")
+		c.Fail(500, "something went wrong")
 	})
 
 	app.Get("/panic", func(c *framework.Context) {
