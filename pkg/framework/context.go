@@ -174,6 +174,34 @@ func (c *Context) Error(status int, message string, code string, details any) {
 	c.JSON(status, resp)
 }
 
+func (c *Context) SuccessOK(data any) {
+	c.Success(http.StatusOK, data)
+}
+
+func (c *Context) SuccessCreated(data any) {
+	c.Success(http.StatusCreated, data)
+}
+
+func (c *Context) BadRequest(message string) {
+	c.Fail(http.StatusBadRequest, message)
+}
+
+func (c *Context) Unauthorized(message string) {
+	c.Fail(http.StatusUnauthorized, message)
+}
+
+func (c *Context) Forbidden(message string) {
+	c.Fail(http.StatusForbidden, message)
+}
+
+func (c *Context) NotFound(message string) {
+	c.Fail(http.StatusNotFound, message)
+}
+
+func (c *Context) InternalError(message string) {
+	c.Fail(http.StatusInternalServerError, message)
+}
+
 // Redirect redirects the client to the given URL with the given status code.
 func (c *Context) Redirect(status int, url string) {
 	http.Redirect(c.Writer, c.Request, url, status)

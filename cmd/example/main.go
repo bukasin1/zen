@@ -21,6 +21,16 @@ func TestMiddleware2(handler framework.HandlerFunc) framework.HandlerFunc {
 	}
 }
 
+// custom context
+type context struct {
+	*framework.Context
+}
+
+func (c *context) SuccessOK(data any) {
+	fmt.Println("New context...")
+	c.JSON(200, data)
+}
+
 func main() {
 	app := framework.New()
 
@@ -34,9 +44,15 @@ func main() {
 	v1.Use(TestMiddleware2)
 
 	api.Get("/health", func(c *framework.Context) {
-		_ = c.JSON(200, map[string]string{
+		ct := &context{
+			Context: c,
+		}
+		ct.SuccessOK(map[string]string{
 			"status": "api running",
 		})
+		// _ = c.JSON(200, map[string]string{
+		// 	"status": "api running",
+		// })
 	})
 
 	v1.Get("/posts/*", func(c *framework.Context) {

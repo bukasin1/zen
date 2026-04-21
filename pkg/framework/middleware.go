@@ -29,10 +29,10 @@ func Recovery() Middleware {
 						c.Error(err.Status, err.Message, err.Code, err.Details)
 
 					case error:
-						c.Error(500, err.Error(), "INTERNAL_ERROR!", nil)
+						c.Error(500, err.Error(), errors.ErrInternal, nil)
 
 					default:
-						c.Error(500, "internal server error", "INTERNAL_ERROR", rec)
+						c.Error(500, "internal server error", errors.ErrInternal, rec)
 					}
 				}
 			}()
