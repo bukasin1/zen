@@ -381,12 +381,15 @@ func (c *Context) MustBindAndValidate(target any) {
 		switch e := err.(type) {
 
 		case validator.ValidationErrors:
-			panic(&frameworkErrors.AppError{
-				Message: "validation failed",
-				Status:  400,
-				Code:    frameworkErrors.ErrValidation,
-				Details: e,
-			})
+			panic(
+				frameworkErrors.WithDetails(
+					frameworkErrors.WithCode(
+						frameworkErrors.New("validation failed", 400),
+						frameworkErrors.ErrValidation,
+					),
+					e,
+				),
+			)
 
 		default:
 			panic(err)

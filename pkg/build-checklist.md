@@ -35,10 +35,18 @@
   - centralized error formatting
 
 ## Validation & Input Contracts
-- [ ] Phase 14 — Validation layer
+- [x] Phase 14 — Validation layer
   - struct validation
   - request binding + validation integration
   - validation error formatting
+
+- [ ] Phase 14.6 - Advanced validation layer (intentionally skipped)
+  - nested struct validation
+  - slice validation
+  - custom rule registration
+  - zero-reflection optimization
+  - validator caching
+
 
 ## Logging & Observability (Critical)
 - [ ] Phase 15 — Logging abstraction

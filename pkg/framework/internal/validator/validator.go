@@ -3,6 +3,7 @@ package validator
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -24,20 +25,35 @@ func ValidateStruct(s any) ValidationErrors {
 		fieldVal := val.Field(i)
 		fieldType := typ.Field(i)
 
-		tag := fieldType.Tag.Get("validate")
-		if tag == "" {
+		validateTag := fieldType.Tag.Get("validate")
+		if validateTag == "" {
 			continue
 		}
 
 		fieldName := fieldType.Name
-		rules := strings.Split(tag, ",")
 
+		jsonTag := fieldType.Tag.Get("json")
+		if jsonTag != "" {
+			name := strings.Split(jsonTag, ",")[0]
+			if name != "" && name != "-" {
+				fieldName = name
+			}
+		}
+
+		msgTag := fieldType.Tag.Get("msg")
+
+		rules := strings.Split(validateTag, ",")
 		for _, rule := range rules {
 			if err := applyRule(fieldVal, rule); err != nil {
+				message := err.Error()
+				if msgTag != "" {
+					message = msgTag
+				}
 				errs = append(errs, FieldError{
 					Field:   fieldName,
-					Message: err.Error(),
+					Message: message,
 				})
+				break
 			}
 		}
 	}
@@ -46,6 +62,12 @@ func ValidateStruct(s any) ValidationErrors {
 }
 
 func applyRule(v reflect.Value, rule string) error {
+	// allow optional fields to pass validation if the rule is not "required"
+	// and the field is zero-valued
+	if isZero(v) && rule != "required" {
+		return nil
+	}
+
 	switch {
 	case rule == "required":
 		if isZero(v) {
@@ -70,12 +92,56 @@ func isZero(v reflect.Value) bool {
 }
 
 func validateMin(v reflect.Value, rule string) error {
-	// example: min=3
-	// implement for string length / int
+	minStr := strings.TrimPrefix(rule, "min=")
+	min, err := strconv.Atoi(minStr)
+	if err != nil {
+		return fmt.Errorf(`invalid min rule: "%v". should be a number`, minStr)
+	}
+
+	switch v.Kind() {
+	case reflect.String:
+		if v.Len() < min {
+			return fmt.Errorf("must be at least %d characters long. characters count is %d", min, v.Len())
+		}
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if v.Int() < int64(min) {
+			return fmt.Errorf("must be at least %d. value is %d", min, v.Int())
+		}
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		if v.Uint() < uint64(min) {
+			return fmt.Errorf("must be at least %d. value is %d", min, v.Uint())
+		}
+	default:
+		return fmt.Errorf("min validation not supported for type %s", v.Kind())
+	}
+
 	return nil
 }
 
 func validateMax(v reflect.Value, rule string) error {
+	maxStr := strings.TrimPrefix(rule, "max=")
+	max, err := strconv.Atoi(maxStr)
+	if err != nil {
+		return fmt.Errorf(`invalid max rule: "%v". should be a number`, maxStr)
+	}
+
+	switch v.Kind() {
+	case reflect.String:
+		if v.Len() > max {
+			return fmt.Errorf("must be at most %d characters long", max)
+		}
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if v.Int() > int64(max) {
+			return fmt.Errorf("must be at most %d", max)
+		}
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		if v.Uint() > uint64(max) {
+			return fmt.Errorf("must be at most %d", max)
+		}
+	default:
+		return fmt.Errorf("max validation not supported for type %s", v.Kind())
+	}
+
 	return nil
 }
 

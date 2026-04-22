@@ -136,8 +136,8 @@ func main() {
 	}
 
 	type CreateUserDTO struct {
-		Email string `json:"email" validate:"required,email"`
-		Age   int    `json:"age" validate:"required,min=18"`
+		Email string `json:"email" validate:"required,email" msg:"Invalid email address"`
+		Age   int    `json:"age" validate:"required,min=18,max=100" msg:"Age must be between 18 and 100"`
 	}
 
 	app.Post("/users", func(c *framework.Context) {
@@ -145,10 +145,10 @@ func main() {
 
 		c.MustBindAndValidate(&req)
 
-		if err := c.BindAndValidate(&req); err != nil {
-			c.Fail(400, err.Error())
-			return
-		}
+		// if err := c.BindAndValidate(&req); err != nil {
+		// 	c.Fail(400, err.Error())
+		// 	return
+		// }
 		fmt.Println("bindjson body unmarshalled:", req)
 
 		// rawReqBody, _ := c.Body()
