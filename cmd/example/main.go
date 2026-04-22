@@ -135,10 +135,17 @@ func main() {
 		Email string `json:"email"`
 	}
 
-	app.Post("/users", func(c *framework.Context) {
-		var req CreateUserRequest
+	type CreateUserDTO struct {
+		Email string `json:"email" validate:"required,email"`
+		Age   int    `json:"age" validate:"required,min=18"`
+	}
 
-		if err := c.BindJSON(&req); err != nil {
+	app.Post("/users", func(c *framework.Context) {
+		var req CreateUserDTO
+
+		c.MustBindAndValidate(&req)
+
+		if err := c.BindAndValidate(&req); err != nil {
 			c.Fail(400, err.Error())
 			return
 		}

@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"time"
 
+	frameworkErrors "github.com/Danieljosh-uduma/zen/pkg/framework/internal/errors"
 	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/response"
+	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/validator"
 )
 
 type contextKey string
@@ -357,6 +359,38 @@ func (c *Context) BindJSON(target any) error {
 func (c *Context) MustBindJSON(target any) {
 	if err := c.BindJSON(target); err != nil {
 		panic(err)
+	}
+}
+
+func (c *Context) BindAndValidate(target any) error {
+	if err := c.BindJSON(target); err != nil {
+		return err
+	}
+
+	validationErrors := validator.ValidateStruct(target)
+	if validationErrors.HasErrors() {
+		return validationErrors
+	}
+
+	return nil
+}
+
+func (c *Context) MustBindAndValidate(target any) {
+	if err := c.BindAndValidate(target); err != nil {
+
+		switch e := err.(type) {
+
+		case validator.ValidationErrors:
+			panic(&frameworkErrors.AppError{
+				Message: "validation failed",
+				Status:  400,
+				Code:    frameworkErrors.ErrValidation,
+				Details: e,
+			})
+
+		default:
+			panic(err)
+		}
 	}
 }
 

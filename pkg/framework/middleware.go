@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/errors"
+	frameworkErrors "github.com/Danieljosh-uduma/zen/pkg/framework/internal/errors"
 )
 
 type Middleware func(HandlerFunc) HandlerFunc
@@ -29,14 +29,14 @@ func Recovery() Middleware {
 
 					switch err := rec.(type) {
 
-					case *errors.AppError:
+					case *frameworkErrors.AppError:
 						c.Error(err.Status, err.Message, err.Code, err.Details)
 
 					case error:
-						c.Error(500, err.Error(), errors.ErrInternal, nil)
+						c.Error(500, err.Error(), frameworkErrors.ErrInternal, nil)
 
 					default:
-						c.Error(500, "internal server error", errors.ErrInternal, rec)
+						c.Error(500, "internal server error", frameworkErrors.ErrInternal, rec)
 					}
 				}
 			}()
