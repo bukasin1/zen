@@ -26,8 +26,8 @@ func (g *Group) Group(prefix string) *Group {
 	}
 }
 
-func (g *Group) Use(m Middleware) {
-	g.middlewares = append(g.middlewares, m)
+func (g *Group) Use(m ...Middleware) {
+	g.middlewares = append(g.middlewares, m...)
 }
 
 func (g *Group) Get(path string, handler HandlerFunc) {

@@ -66,7 +66,7 @@ func (a *App) buildAppHandler() http.Handler {
 		ctx := NewContext(w, r)
 
 		handler := func(c *Context) {
-			a.router.ServeHTTP(c.Writer, c.Request)
+			a.router.ServeHTTP(c)
 		}
 
 		handler = a.applyMiddlewares(handler)

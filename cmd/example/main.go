@@ -47,6 +47,10 @@ func main() {
 		ct := &context{
 			Context: c,
 		}
+		c.AfterResponse(func(c *framework.Context) {
+			log.Printf("Response sent: %d, %s, %s", c.StatusCode(), c.Request.URL.Path, c.Request.Method)
+		})
+
 		ct.SuccessOK(map[string]string{
 			"status": "api running",
 		})
@@ -156,6 +160,9 @@ func main() {
 	})
 
 	app.Get("/error", func(c *framework.Context) {
+		c.AfterResponse(func(c *framework.Context) {
+			log.Printf("Response sent in get error: %d, %s, %s", c.StatusCode(), c.Request.URL.Path, c.Request.Method)
+		})
 		c.Fail(500, "something went wrong")
 	})
 
@@ -164,6 +171,9 @@ func main() {
 	})
 
 	app.Post("/panic", func(c *framework.Context) {
+		c.AfterResponse(func(c *framework.Context) {
+			log.Printf("Response sent in post panic: %d, %s, %s", c.StatusCode(), c.Request.URL.Path, c.Request.Method)
+		})
 		panic("something went wrong post")
 	})
 

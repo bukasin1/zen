@@ -44,6 +44,9 @@ type Context struct {
 
 	requestID string
 	startTime time.Time
+
+	responseCommitted bool
+	afterResponse     []func(c *Context)
 }
 
 func NewContext(w http.ResponseWriter, r *http.Request) *Context {
@@ -73,6 +76,7 @@ func NewContext(w http.ResponseWriter, r *http.Request) *Context {
 
 // --------------- Response Writer Helpers ------------
 
+// StatusCode returns the status code of the response.
 func (c *Context) StatusCode() int {
 	if rw, ok := c.Writer.(*responseWriter); ok {
 		return rw.status
@@ -80,6 +84,7 @@ func (c *Context) StatusCode() int {
 	return 0
 }
 
+// ResponseSize returns the size of the response.
 func (c *Context) ResponseSize() int {
 	if rw, ok := c.Writer.(*responseWriter); ok {
 		return rw.size
@@ -107,27 +112,75 @@ func (c *Context) DelHeader(key string) {
 	c.Writer.Header().Del(key)
 }
 
+// AfterResponse registers a function hook to be called after the response is sent.
+func (c *Context) AfterResponse(fn func(c *Context)) {
+	c.afterResponse = append(c.afterResponse, fn)
+}
+
+// writeResponse is a helper function to write a response to the client.
+func (c *Context) writeResponse(writeFn func() error) error {
+	if c.responseCommitted {
+		return nil
+	}
+
+	// mark as committed
+	c.responseCommitted = true
+
+	err := writeFn()
+
+	// run extended hooks AFTER write attempt
+	for _, fn := range c.afterResponse {
+		fn(c)
+	}
+
+	return err
+}
+
+// Redirect redirects the client to the given URL with the given status code.
+func (c *Context) Redirect(status int, url string) {
+	_ = c.writeResponse(func() error {
+		http.Redirect(c.Writer, c.Request, url, status)
+		return nil
+	})
+}
+
+// NoContent writes a no content response to the client.
+func (c *Context) NoContent() {
+	_ = c.writeResponse(func() error {
+		c.DelHeader("Content-Type")
+		c.Status(http.StatusNoContent)
+		return nil
+	})
+}
+
 // Text writes a text response to the client.
 func (c *Context) Text(status int, message string) error {
-	c.SetHeader("Content-Type", "text/plain")
-	c.Status(status)
-	_, err := c.Writer.Write([]byte(message))
-	return err
+	return c.writeResponse(func() error {
+		c.SetHeader("Content-Type", "text/plain")
+		c.Status(status)
+		_, err := c.Writer.Write([]byte(message))
+		return err
+	})
 }
 
 // JSON writes a JSON response to the client.
 func (c *Context) JSON(status int, data any) error {
-	c.SetHeader("Content-Type", "application/json")
-	c.Status(status)
-	return json.NewEncoder(c.Writer).Encode(data)
+	err := c.writeResponse(func() error {
+		c.SetHeader("Content-Type", "application/json")
+		c.Status(status)
+		return json.NewEncoder(c.Writer).Encode(data)
+	})
+	return err
 }
 
 // HTML writes an HTML response to the client.
 func (c *Context) HTML(status int, html string) error {
-	c.SetHeader("Content-Type", "text/html")
-	c.Status(status)
-	_, err := c.Writer.Write([]byte(html))
-	return err
+	return c.writeResponse(func() error {
+		c.SetHeader("Content-Type", "text/html")
+		c.Status(status)
+		_, err := c.Writer.Write([]byte(html))
+		return err
+	})
 }
 
 func (c *Context) Success(status int, data any) {
@@ -174,43 +227,39 @@ func (c *Context) Error(status int, message string, code string, details any) {
 	c.JSON(status, resp)
 }
 
+// SuccessOK writes a success response with status code 200.
 func (c *Context) SuccessOK(data any) {
 	c.Success(http.StatusOK, data)
 }
 
+// SuccessCreated writes a success response with status code 201.
 func (c *Context) SuccessCreated(data any) {
 	c.Success(http.StatusCreated, data)
 }
 
+// BadRequest writes a bad request response with status code 400.
 func (c *Context) BadRequest(message string) {
 	c.Fail(http.StatusBadRequest, message)
 }
 
+// Unauthorized writes an unauthorized response with status code 401.
 func (c *Context) Unauthorized(message string) {
 	c.Fail(http.StatusUnauthorized, message)
 }
 
+// Forbidden writes a forbidden response with status code 403.
 func (c *Context) Forbidden(message string) {
 	c.Fail(http.StatusForbidden, message)
 }
 
+// NotFound writes a not found response with status code 404.
 func (c *Context) NotFound(message string) {
 	c.Fail(http.StatusNotFound, message)
 }
 
+// InternalError writes an internal server error response with status code 500.
 func (c *Context) InternalError(message string) {
 	c.Fail(http.StatusInternalServerError, message)
-}
-
-// Redirect redirects the client to the given URL with the given status code.
-func (c *Context) Redirect(status int, url string) {
-	http.Redirect(c.Writer, c.Request, url, status)
-}
-
-// NoContent writes a no content response to the client.
-func (c *Context) NoContent() {
-	c.DelHeader("Content-Type")
-	c.Status(http.StatusNoContent)
 }
 
 // ----------------- Response Writer Helpers End ----------

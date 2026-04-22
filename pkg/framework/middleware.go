@@ -23,6 +23,10 @@ func Recovery() Middleware {
 		return func(c *Context) {
 			defer func() {
 				if rec := recover(); rec != nil {
+					if c.responseCommitted {
+						return
+					}
+
 					switch err := rec.(type) {
 
 					case *errors.AppError:
@@ -45,45 +49,46 @@ func Recovery() Middleware {
 func Logger() Middleware {
 	return func(next HandlerFunc) HandlerFunc {
 		return func(c *Context) {
-			// start := time.Now()
+			c.AfterResponse(func(c *Context) {
+				status := c.StatusCode()
+				if status == 0 {
+					status = http.StatusOK
+				}
+
+				duration := formatDuration(c.Duration())
+				size := c.ResponseSize()
+				method := c.Request.Method
+				path := c.Request.URL.Path
+				ip := getClientIP(c.Request)
+				rid := c.RequestID()
+
+				statusCol := statusColor(status)
+
+				fmt.Printf(
+					"[%s] %s%s%s | %s%-3d%s | %s%-6s%s %s | %s | %s | %dB\n",
+					rid,
+					colorGray,
+					c.StartTime().Format("15:04:05"),
+					colorReset,
+
+					statusCol, status, colorReset,
+
+					colorBlue, method, colorReset,
+					path,
+
+					duration,
+					ip,
+					size,
+				)
+
+			})
 
 			next(c)
-
-			status := c.StatusCode()
-			if status == 0 {
-				status = http.StatusOK
-			}
-
-			duration := formatDuration(c.Duration())
-			size := c.ResponseSize()
-			method := c.Request.Method
-			path := c.Request.URL.Path
-			ip := getClientIP(c.Request)
-			rid := c.RequestID()
-
-			statusCol := statusColor(status)
-
-			fmt.Printf(
-				"[%s] %s%s%s | %s%-3d%s | %s%-6s%s %s | %s | %s | %dB\n",
-				rid,
-				colorGray,
-				c.StartTime().Format("15:04:05"),
-				colorReset,
-
-				statusCol, status, colorReset,
-
-				colorBlue, method, colorReset,
-				path,
-
-				duration,
-				ip,
-				size,
-			)
 		}
 	}
 }
 
-func Logger1() Middleware {
+func LoggerOld() Middleware {
 	return func(next HandlerFunc) HandlerFunc {
 		return func(c *Context) {
 			start := time.Now()

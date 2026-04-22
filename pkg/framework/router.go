@@ -271,15 +271,13 @@ func (r *Router) FindRoute(method, path string) (HandlerFunc, map[string]string,
 	return handler, params, true
 }
 
-func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if handler, params, ok := r.FindRoute(req.Method, req.URL.Path); ok {
-		ctx := NewContext(w, req)
+func (r *Router) ServeHTTP(ctx *Context) {
+	if handler, params, ok := r.FindRoute(ctx.Request.Method, ctx.Request.URL.Path); ok {
 		ctx.params = params
 		handler(ctx)
 		return
 	}
 
-	ctx := NewContext(w, req)
 	ctx.Fail(http.StatusNotFound, "404 page not found!")
 
 	// http.NotFound(w, req)
