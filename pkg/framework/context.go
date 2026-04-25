@@ -136,11 +136,16 @@ func (c *Context) writeResponse(writeFn func() error) error {
 	err := writeFn()
 
 	// run extended hooks AFTER write attempt
+	c.runAfterResponseHooks()
+
+	return err
+}
+
+// runAfterResponseHooks runs all registered after response hooks.
+func (c *Context) runAfterResponseHooks() {
 	for _, fn := range c.afterResponse {
 		fn(c)
 	}
-
-	return err
 }
 
 // Redirect redirects the client to the given URL with the given status code.

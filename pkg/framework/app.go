@@ -1,8 +1,14 @@
 package framework
 
 import (
+	"context"
+	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/Danieljosh-uduma/zen/pkg/framework/share/logger"
 )
@@ -13,6 +19,14 @@ type App struct {
 	systemMiddlewares []Middleware
 
 	logger logger.Logger
+
+	// ✅ NEW
+	server *http.Server
+
+	onStartHooks    []func(ctx context.Context) error
+	onShutdownHooks []func(ctx context.Context) error
+
+	shutdownTimeout time.Duration
 }
 
 // TODO: add new app configs (Probable future updates)
@@ -24,6 +38,8 @@ func New() *App {
 		systemMiddlewares: []Middleware{Logger(), Recovery()},
 
 		logger: logger.NewConsoleLogger(true),
+
+		shutdownTimeout: 10 * time.Second,
 	}
 
 	return app
@@ -54,6 +70,8 @@ func (a *App) Static(path, dir string) {
 
 	a.router.Handle(http.MethodGet, path, HandlerFunc(func(ctx *Context) {
 		fs.ServeHTTP(ctx.Writer, ctx.Request)
+		// run context extended hooks AFTER static write attempt
+		ctx.runAfterResponseHooks()
 	}))
 }
 
@@ -71,6 +89,33 @@ func (a *App) applyMiddlewares(h HandlerFunc) HandlerFunc {
 	return h
 }
 
+func (a *App) OnStart(fn func(ctx context.Context) error) {
+	a.onStartHooks = append(a.onStartHooks, fn)
+}
+
+func (a *App) OnShutdown(fn func(ctx context.Context) error) {
+	a.onShutdownHooks = append(a.onShutdownHooks, fn)
+}
+
+func (a *App) runStartHooks(ctx context.Context) error {
+	for _, hook := range a.onStartHooks {
+		if err := hook(ctx); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (a *App) runShutdownHooks(ctx context.Context) {
+	for _, hook := range a.onShutdownHooks {
+		if err := hook(ctx); err != nil {
+			a.logger.Error("shutdown hook failed", logger.Fields{
+				"error": err.Error(),
+			})
+		}
+	}
+}
+
 func (a *App) buildAppHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := NewContext(w, r, a.logger)
@@ -84,9 +129,68 @@ func (a *App) buildAppHandler() http.Handler {
 	})
 }
 
-func (a *App) Listen(addr string) error {
+func (a *App) Run(addr string) error {
 	handler := a.buildAppHandler()
-	return http.ListenAndServe(addr, handler)
+	// http.ListenAndServe(addr, handler)
+
+	// create server instance
+	a.server = &http.Server{
+		Addr:    addr,
+		Handler: handler,
+	}
+
+	rootCtx := context.Background()
+
+	// 1. Run startup hooks
+	if err := a.runStartHooks(rootCtx); err != nil {
+		a.logger.Error("startup hook failed", logger.Fields{
+			"error": err.Error(),
+		})
+		return err
+	}
+
+	// 2. Start server in goroutine
+	go func() {
+		a.logger.Info(fmt.Sprintf("server starting on http://localhost%v/\n", addr), logger.Fields{
+			"addr": addr,
+		})
+
+		if err := a.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			a.logger.Error("server error", logger.Fields{
+				"error": err.Error(),
+			})
+		}
+	}()
+
+	// 3. Listen for OS signals
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	sig := <-quit
+
+	a.logger.Info("shutdown signal received", logger.Fields{
+		"signal": sig.String(),
+	})
+
+	// 4. Create timeout context
+	ctx, cancel := context.WithTimeout(context.Background(), a.shutdownTimeout)
+	defer cancel()
+
+	// 5. Graceful shutdown (drains active requests)
+	if err := a.server.Shutdown(ctx); err != nil {
+		a.logger.Error("server shutdown failed", logger.Fields{
+			"error": err.Error(),
+		})
+	} else {
+		a.logger.Info("server shutdown complete", nil)
+	}
+
+	// 6. Run shutdown hooks AFTER draining
+	a.runShutdownHooks(ctx)
+
+	a.logger.Info("application shutdown complete", nil)
+
+	return nil
 }
 
 // ------------------------- Deprecated Functions ------------------

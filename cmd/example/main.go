@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/Danieljosh-uduma/zen/pkg/framework"
 	"github.com/Danieljosh-uduma/zen/pkg/framework/share/logger"
@@ -23,11 +25,11 @@ func TestMiddleware2(handler framework.HandlerFunc) framework.HandlerFunc {
 }
 
 // custom context
-type context struct {
+type Context struct {
 	*framework.Context
 }
 
-func (c *context) SuccessOK(data any) {
+func (c *Context) SuccessOK(data any) {
 	fmt.Println("New context...")
 	c.JSON(200, data)
 }
@@ -39,17 +41,15 @@ func main() {
 	// app.Use(framework.Recovery())
 	// app.Use(framework.Logger())
 
-	// modify based on development or production
-	// app.SetLogger(logger.NewDevConsoleLogger())
-	app.SetLogger(logger.NewConsoleLogger(false))
-
 	api := app.Group("/api")
 	api.Use(TestMiddleware)
 	v1 := api.Group("/v1")
 	v1.Use(TestMiddleware2)
 
 	api.Get("/health", func(c *framework.Context) {
-		ct := &context{
+		// Simulates a 3-second operation
+		time.Sleep(3 * time.Second)
+		ct := &Context{
 			Context: c,
 		}
 		c.AfterResponse(func(c *framework.Context) {
@@ -201,9 +201,20 @@ func main() {
 		})
 	})
 
-	log.Println("server starting on :8080")
+	app.OnStart(func(ctx context.Context) error {
+		// modify based on development or production
+		app.SetLogger(logger.NewDevConsoleLogger())
+		// app.SetLogger(logger.NewConsoleLogger(false))
+		return nil
+	})
 
-	if err := app.Listen(":8080"); err != nil {
+	app.OnShutdown(func(ctx context.Context) error {
+		fmt.Println("application shutting down...")
+		// close DB, queues, etc.
+		return nil
+	})
+
+	if err := app.Run(":8080"); err != nil {
 		log.Fatal(err)
 	}
 }
