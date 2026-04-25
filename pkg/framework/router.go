@@ -287,22 +287,20 @@ func (r *Router) ServeHTTP(ctx *Context) {
 
 // Deprecated: meant for removal
 // TODO: (for clean up) remove this function
-func (r *Router) ServeHTTPOld(w http.ResponseWriter, req *http.Request) {
-	if handler, params, ok := r.FindRouteOld(req.Method, req.URL.Path); ok {
-		ctx := NewContext(w, req)
+func (r *Router) ServeHTTPOld(ctx *Context) {
+	if handler, params, ok := r.FindRouteOld(ctx.Request.Method, ctx.Request.URL.Path); ok {
 		ctx.params = params
 		handler(ctx)
 		return
 	}
 
 	for _, static := range r.staticRoutes {
-		if matchStaticPrefix(req.URL.Path, static.prefix) {
-			static.handler.ServeHTTP(w, req)
+		if matchStaticPrefix(ctx.Request.URL.Path, static.prefix) {
+			static.handler.ServeHTTP(ctx.Writer, ctx.Request)
 			return
 		}
 	}
 
-	ctx := NewContext(w, req)
 	ctx.Fail(http.StatusNotFound, "404 page not found!")
 }
 

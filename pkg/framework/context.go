@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"maps"
 	"net/http"
 	"time"
 
 	frameworkErrors "github.com/Danieljosh-uduma/zen/pkg/framework/internal/errors"
+	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/logger"
 	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/response"
 	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/validator"
 )
@@ -49,9 +51,11 @@ type Context struct {
 
 	responseCommitted bool
 	afterResponse     []func(c *Context)
+
+	logger logger.Logger
 }
 
-func NewContext(w http.ResponseWriter, r *http.Request) *Context {
+func NewContext(w http.ResponseWriter, r *http.Request, logger logger.Logger) *Context {
 	rw := &responseWriter{
 		ResponseWriter: w,
 		status:         0,
@@ -73,6 +77,7 @@ func NewContext(w http.ResponseWriter, r *http.Request) *Context {
 
 		requestID: requestID,
 		startTime: time.Now(),
+		logger:    logger,
 	}
 }
 
@@ -446,6 +451,50 @@ func (c *Context) StartTime() time.Time {
 // Duration returns the request duration.
 func (c *Context) Duration() time.Duration {
 	return time.Since(c.startTime)
+}
+
+func (c *Context) LogInfo(msg string, fields logger.Fields) {
+	copyFields := make(logger.Fields)
+	maps.Copy(copyFields, fields)
+
+	copyFields["request_id"] = c.RequestID()
+	copyFields["path"] = c.Request.URL.Path
+	copyFields["method"] = c.Request.Method
+
+	c.logger.Info(msg, copyFields)
+}
+
+func (c *Context) LogError(msg string, fields logger.Fields) {
+	copyFields := make(logger.Fields)
+	maps.Copy(copyFields, fields)
+
+	copyFields["request_id"] = c.RequestID()
+	copyFields["path"] = c.Request.URL.Path
+	copyFields["method"] = c.Request.Method
+
+	c.logger.Error(msg, copyFields)
+}
+
+func (c *Context) LogWarn(msg string, fields logger.Fields) {
+	copyFields := make(logger.Fields)
+	maps.Copy(copyFields, fields)
+
+	copyFields["request_id"] = c.RequestID()
+	copyFields["path"] = c.Request.URL.Path
+	copyFields["method"] = c.Request.Method
+
+	c.logger.Warn(msg, copyFields)
+}
+
+func (c *Context) LogDebug(msg string, fields logger.Fields) {
+	copyFields := make(logger.Fields)
+	maps.Copy(copyFields, fields)
+
+	copyFields["request_id"] = c.RequestID()
+	copyFields["path"] = c.Request.URL.Path
+	copyFields["method"] = c.Request.Method
+
+	c.logger.Debug(msg, copyFields)
 }
 
 // ----------------- Context Helpers End ----------------------------

@@ -49,7 +49,7 @@
 
 
 ## Logging & Observability (Critical)
-- [ ] Phase 15 — Logging abstraction
+- [x] Phase 15 — Logging abstraction
   - structured logging (not just printf)
   - request-aware logs (request ID integration)
   - pluggable logger interface

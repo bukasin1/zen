@@ -3,12 +3,16 @@ package framework
 import (
 	"net/http"
 	"strings"
+
+	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/logger"
 )
 
 type App struct {
 	router            *Router
 	middlewares       []Middleware
 	systemMiddlewares []Middleware
+
+	logger logger.Logger
 }
 
 // TODO: add new app configs (Probable future updates)
@@ -18,6 +22,8 @@ func New() *App {
 		middlewares: []Middleware{},
 		// auto install system middlewares
 		systemMiddlewares: []Middleware{Logger(), Recovery()},
+
+		logger: logger.NewConsoleLogger(false),
 	}
 
 	return app
@@ -63,7 +69,7 @@ func (a *App) applyMiddlewares(h HandlerFunc) HandlerFunc {
 
 func (a *App) buildAppHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := NewContext(w, r)
+		ctx := NewContext(w, r, a.logger)
 
 		handler := func(c *Context) {
 			a.router.ServeHTTP(c)
@@ -92,10 +98,10 @@ func (a *App) ListenOld(addr string) error {
 // TODO: remove this function
 func (a *App) buildAppHandlerOld() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := NewContext(w, r)
+		ctx := NewContext(w, r, a.logger)
 
 		handler := func(c *Context) {
-			a.router.ServeHTTPOld(c.Writer, c.Request)
+			a.router.ServeHTTPOld(c)
 		}
 
 		handler = a.applyMiddlewares(handler)

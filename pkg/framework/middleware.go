@@ -6,6 +6,7 @@ import (
 	"time"
 
 	frameworkErrors "github.com/Danieljosh-uduma/zen/pkg/framework/internal/errors"
+	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/logger"
 )
 
 type Middleware func(HandlerFunc) HandlerFunc
@@ -47,6 +48,30 @@ func Recovery() Middleware {
 }
 
 func Logger() Middleware {
+	return func(next HandlerFunc) HandlerFunc {
+		return func(c *Context) {
+
+			c.AfterResponse(func(c *Context) {
+				status := c.StatusCode()
+				if status == 0 {
+					status = http.StatusOK
+				}
+
+				c.LogInfo("request completed", logger.Fields{
+					"status":   status,
+					"duration": formatDuration(c.Duration()),
+					"size":     c.ResponseSize(),
+					"ip":       getClientIP(c.Request),
+				})
+			})
+
+			next(c)
+
+		}
+	}
+}
+
+func Logger1() Middleware {
 	return func(next HandlerFunc) HandlerFunc {
 		return func(c *Context) {
 			c.AfterResponse(func(c *Context) {
