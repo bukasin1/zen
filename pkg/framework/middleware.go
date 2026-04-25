@@ -65,7 +65,7 @@ func Logger() Middleware {
 					"duration":  utils.FormatDuration(c.Duration()),
 					"size":      c.ResponseSize(),
 					"ip":        utils.GetClientIP(c.Request),
-					"method":    c.Request.Method,
+					"method":    fmt.Sprintf("%s%s%s", utils.ColorBlue, c.Request.Method, utils.ColorReset),
 					"path":      c.Request.URL.Path,
 					"requestID": c.RequestID(),
 				})

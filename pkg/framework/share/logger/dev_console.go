@@ -33,7 +33,7 @@ func (l *DevConsoleLogger) log(level string, color string, msg string, fields Fi
 
 // Info logs an info message
 func (l *DevConsoleLogger) Info(msg string, fields Fields) {
-	l.log("INFO", utils.ColorBlue, msg, fields)
+	l.log("INFO", utils.ColorGreen, msg, fields)
 }
 
 // Error logs an error message
