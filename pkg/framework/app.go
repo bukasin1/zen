@@ -26,22 +26,89 @@ type App struct {
 	onShutdownHooks []func(ctx context.Context) error
 
 	shutdownTimeout time.Duration
+
+	config Config
 }
 
-// TODO: add new app configs (Probable future updates)
 func New() *App {
+	cfg := DefaultConfig()
+
 	app := &App{
 		router:      NewRouter(),
 		middlewares: []Middleware{},
 		// auto install system middlewares
 		systemMiddlewares: []Middleware{Logger(), Recovery()},
 
-		logger: logger.NewConsoleLogger(true),
+		logger: logger.NewConsoleLogger(cfg.Log.Pretty),
 
-		shutdownTimeout: 10 * time.Second,
+		shutdownTimeout: cfg.HTTP.ShutdownTimeout,
+
+		config: cfg,
 	}
 
 	return app
+}
+
+// Sets the application configuration after instantiation.
+//
+// Note:
+// HTTP config ShutdownTimeout default is 10s,
+// HTTP config Addr default is :8080,
+// Log config Pretty default is false,
+// Log config EnableJSON default is false
+func (a *App) SetAppConfig(cfg Config) {
+	if cfg.AppName != "" {
+		a.config.AppName = cfg.AppName
+	}
+	if cfg.Env != "" {
+		a.config.Env = cfg.Env
+	}
+	if cfg.HTTP.Addr != "" {
+		a.config.HTTP.Addr = cfg.HTTP.Addr
+	}
+	if cfg.HTTP.ShutdownTimeout != 0 {
+		a.config.HTTP.ShutdownTimeout = cfg.HTTP.ShutdownTimeout
+	}
+	if cfg.Log.Level != "" {
+		a.config.Log.Level = cfg.Log.Level
+	}
+
+	a.config.Log.Pretty = cfg.Log.Pretty
+	a.config.Log.EnableJSON = cfg.Log.EnableJSON
+
+	a.logger = logger.NewConsoleLogger(a.config.Log.Pretty)
+	a.shutdownTimeout = a.config.HTTP.ShutdownTimeout
+}
+
+// Sets App's HTTP configuration after instantiation.
+//
+// Note:
+// HTTP config Addr default is :8080,
+// HTTP config ShutdownTimeout default is 10s
+func (a *App) SetHTTPConfig(h HTTPConfig) {
+	if h.Addr != "" {
+		a.config.HTTP.Addr = h.Addr
+	}
+	if h.ShutdownTimeout != 0 {
+		a.config.HTTP.ShutdownTimeout = h.ShutdownTimeout
+	}
+
+	a.shutdownTimeout = a.config.HTTP.ShutdownTimeout
+}
+
+// Sets App's Logger configuration after instantiation.
+//
+// Note:
+// Log config Pretty default is false,
+// Log config EnableJSON default is false
+func (a *App) SetLoggerConfig(l LogConfig) {
+	if l.Level != "" {
+		a.config.Log.Level = l.Level
+	}
+	a.config.Log.Pretty = l.Pretty
+	a.config.Log.EnableJSON = l.EnableJSON
+
+	a.logger = logger.NewConsoleLogger(a.config.Log.Pretty)
 }
 
 func (a *App) SetLogger(l logger.Logger) {
@@ -128,7 +195,8 @@ func (a *App) buildAppHandler() http.Handler {
 	})
 }
 
-func (a *App) Run(addr string) error {
+func (a *App) Run(_ string) error {
+	addr := a.config.HTTP.Addr
 	handler := a.buildAppHandler()
 	// http.ListenAndServe(addr, handler)
 

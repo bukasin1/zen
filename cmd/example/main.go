@@ -37,6 +37,18 @@ func (c *Context) SuccessOK(data any) {
 func main() {
 	app := framework.New()
 
+	app.SetAppConfig(framework.Config{
+		AppName: "Zen",
+		HTTP: framework.HTTPConfig{
+			Addr: ":8080",
+		},
+		Log: framework.LogConfig{
+			Level:      "debug",
+			Pretty:     true,
+			EnableJSON: true,
+		},
+	})
+
 	// System middlewares are auto installed
 	// app.Use(framework.Recovery())
 	// app.Use(framework.Logger())

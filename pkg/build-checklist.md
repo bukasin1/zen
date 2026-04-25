@@ -66,9 +66,9 @@
 
 ## Configuration System
 - [ ] Phase 17 — Config system
-  - env-based config
-  - config struct loading
-  - optional file support (.env / yaml)
+  -[x] config struct loading
+  -[ ] env-based config
+  -[ ] optional file support (.env / yaml)
 
 ## Concurrency-Safe Services
 - [ ] Phase 18 — Shared services safety
