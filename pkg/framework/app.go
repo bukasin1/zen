@@ -2,7 +2,6 @@ package framework
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -151,7 +150,7 @@ func (a *App) Run(addr string) error {
 
 	// 2. Start server in goroutine
 	go func() {
-		a.logger.Info(fmt.Sprintf("server starting on http://localhost%v/\n", addr), logger.Fields{
+		a.logger.Info("server starting", logger.Fields{
 			"addr": addr,
 		})
 
@@ -167,6 +166,7 @@ func (a *App) Run(addr string) error {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
 	sig := <-quit
+	signal.Stop(quit)
 
 	a.logger.Info("shutdown signal received", logger.Fields{
 		"signal": sig.String(),

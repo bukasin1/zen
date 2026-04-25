@@ -19,13 +19,19 @@ func (l *DevConsoleLogger) log(level string, color string, msg string, fields Fi
 		// color and level
 		color, level, utils.ColorReset,
 		// time
-		utils.ColorGray, time.Now().UTC().Format("15:04:05"), utils.ColorReset,
+		utils.ColorGray, time.Now().UTC().Format(time.RFC3339), utils.ColorReset,
 
 		msg,
 	)
 
 	for k, v := range fields {
-		fmt.Printf(" %s=%v", k, v)
+		switch k {
+		case "addr":
+			fmt.Printf(" on %shttp://localhost%v%s", utils.ColorYellow, v, utils.ColorReset)
+			continue
+		default:
+			fmt.Printf(" %s=%v", k, v)
+		}
 	}
 
 	fmt.Println()
