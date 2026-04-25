@@ -6,7 +6,8 @@ import (
 	"time"
 
 	frameworkErrors "github.com/Danieljosh-uduma/zen/pkg/framework/internal/errors"
-	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/logger"
+	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/utils"
+	"github.com/Danieljosh-uduma/zen/pkg/framework/share/logger"
 )
 
 type Middleware func(HandlerFunc) HandlerFunc
@@ -57,11 +58,16 @@ func Logger() Middleware {
 					status = http.StatusOK
 				}
 
+				statusCol := utils.StatusColor(status)
+
 				c.LogInfo("request completed", logger.Fields{
-					"status":   status,
-					"duration": formatDuration(c.Duration()),
-					"size":     c.ResponseSize(),
-					"ip":       getClientIP(c.Request),
+					"status":    fmt.Sprintf("%s%d%s", statusCol, status, utils.ColorReset),
+					"duration":  utils.FormatDuration(c.Duration()),
+					"size":      c.ResponseSize(),
+					"ip":        utils.GetClientIP(c.Request),
+					"method":    c.Request.Method,
+					"path":      c.Request.URL.Path,
+					"requestID": c.RequestID(),
 				})
 			})
 
@@ -80,25 +86,25 @@ func Logger1() Middleware {
 					status = http.StatusOK
 				}
 
-				duration := formatDuration(c.Duration())
+				duration := utils.FormatDuration(c.Duration())
 				size := c.ResponseSize()
 				method := c.Request.Method
 				path := c.Request.URL.Path
-				ip := getClientIP(c.Request)
+				ip := utils.GetClientIP(c.Request)
 				rid := c.RequestID()
 
-				statusCol := statusColor(status)
+				statusCol := utils.StatusColor(status)
 
 				fmt.Printf(
 					"[%s] %s%s%s | %s%-3d%s | %s%-6s%s %s | %s | %s | %dB\n",
 					rid,
-					colorGray,
+					utils.ColorGray,
 					c.StartTime().Format("15:04:05"),
-					colorReset,
+					utils.ColorReset,
 
-					statusCol, status, colorReset,
+					statusCol, status, utils.ColorReset,
 
-					colorBlue, method, colorReset,
+					utils.ColorBlue, method, utils.ColorReset,
 					path,
 
 					duration,

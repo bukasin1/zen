@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/Danieljosh-uduma/zen/pkg/framework"
+	"github.com/Danieljosh-uduma/zen/pkg/framework/share/logger"
 )
 
 func TestMiddleware(handler framework.HandlerFunc) framework.HandlerFunc {
@@ -37,6 +38,10 @@ func main() {
 	// System middlewares are auto installed
 	// app.Use(framework.Recovery())
 	// app.Use(framework.Logger())
+
+	// modify based on development or production
+	// app.SetLogger(logger.NewDevConsoleLogger())
+	app.SetLogger(logger.NewConsoleLogger(false))
 
 	api := app.Group("/api")
 	api.Use(TestMiddleware)

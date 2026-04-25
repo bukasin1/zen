@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/logger"
+	"github.com/Danieljosh-uduma/zen/pkg/framework/share/logger"
 )
 
 type App struct {
@@ -23,10 +23,14 @@ func New() *App {
 		// auto install system middlewares
 		systemMiddlewares: []Middleware{Logger(), Recovery()},
 
-		logger: logger.NewConsoleLogger(false),
+		logger: logger.NewConsoleLogger(true),
 	}
 
 	return app
+}
+
+func (a *App) SetLogger(l logger.Logger) {
+	a.logger = l
 }
 
 func (a *App) Use(m Middleware) {

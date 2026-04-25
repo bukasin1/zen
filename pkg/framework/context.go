@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"maps"
 	"net/http"
 	"time"
 
 	frameworkErrors "github.com/Danieljosh-uduma/zen/pkg/framework/internal/errors"
-	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/logger"
 	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/response"
+	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/utils"
 	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/validator"
+	"github.com/Danieljosh-uduma/zen/pkg/framework/share/logger"
 )
 
 type contextKey string
@@ -63,7 +63,7 @@ func NewContext(w http.ResponseWriter, r *http.Request, logger logger.Logger) *C
 	}
 
 	// ✅ generate request ID first
-	requestID := generateRequestID()
+	requestID := utils.GenerateRequestID()
 
 	// ✅ attach to standard Go context
 	ctx := context.WithValue(r.Context(), RequestIDKey, requestID)
@@ -454,47 +454,19 @@ func (c *Context) Duration() time.Duration {
 }
 
 func (c *Context) LogInfo(msg string, fields logger.Fields) {
-	copyFields := make(logger.Fields)
-	maps.Copy(copyFields, fields)
-
-	copyFields["request_id"] = c.RequestID()
-	copyFields["path"] = c.Request.URL.Path
-	copyFields["method"] = c.Request.Method
-
-	c.logger.Info(msg, copyFields)
+	c.logger.Info(msg, fields)
 }
 
 func (c *Context) LogError(msg string, fields logger.Fields) {
-	copyFields := make(logger.Fields)
-	maps.Copy(copyFields, fields)
-
-	copyFields["request_id"] = c.RequestID()
-	copyFields["path"] = c.Request.URL.Path
-	copyFields["method"] = c.Request.Method
-
-	c.logger.Error(msg, copyFields)
+	c.logger.Error(msg, fields)
 }
 
 func (c *Context) LogWarn(msg string, fields logger.Fields) {
-	copyFields := make(logger.Fields)
-	maps.Copy(copyFields, fields)
-
-	copyFields["request_id"] = c.RequestID()
-	copyFields["path"] = c.Request.URL.Path
-	copyFields["method"] = c.Request.Method
-
-	c.logger.Warn(msg, copyFields)
+	c.logger.Warn(msg, fields)
 }
 
 func (c *Context) LogDebug(msg string, fields logger.Fields) {
-	copyFields := make(logger.Fields)
-	maps.Copy(copyFields, fields)
-
-	copyFields["request_id"] = c.RequestID()
-	copyFields["path"] = c.Request.URL.Path
-	copyFields["method"] = c.Request.Method
-
-	c.logger.Debug(msg, copyFields)
+	c.logger.Debug(msg, fields)
 }
 
 // ----------------- Context Helpers End ----------------------------

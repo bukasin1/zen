@@ -1,4 +1,4 @@
-package framework
+package utils
 
 import (
 	"crypto/rand"
@@ -12,29 +12,29 @@ import (
 
 // ANSI colors
 const (
-	colorReset  = "\033[0m"
-	colorGreen  = "\033[32m"
-	colorYellow = "\033[33m"
-	colorRed    = "\033[31m"
-	colorBlue   = "\033[34m"
-	colorCyan   = "\033[36m"
-	colorGray   = "\033[90m"
+	ColorReset  = "\033[0m"
+	ColorGreen  = "\033[32m"
+	ColorYellow = "\033[33m"
+	ColorRed    = "\033[31m"
+	ColorBlue   = "\033[34m"
+	ColorCyan   = "\033[36m"
+	ColorGray   = "\033[90m"
 )
 
-func statusColor(status int) string {
+func StatusColor(status int) string {
 	switch {
 	case status >= 200 && status < 300:
-		return colorGreen
+		return ColorGreen
 	case status >= 300 && status < 400:
-		return colorCyan
+		return ColorCyan
 	case status >= 400 && status < 500:
-		return colorYellow
+		return ColorYellow
 	default:
-		return colorRed
+		return ColorRed
 	}
 }
 
-func formatDuration(d time.Duration) string {
+func FormatDuration(d time.Duration) string {
 	if d < time.Millisecond {
 		return fmt.Sprintf("%dµs", d.Microseconds())
 	}
@@ -44,7 +44,7 @@ func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%.2fs", d.Seconds())
 }
 
-func getClientIP(r *http.Request) string {
+func GetClientIP(r *http.Request) string {
 	// common reverse proxy headers
 	if ip := r.Header.Get("X-Forwarded-For"); ip != "" {
 		return strings.Split(ip, ",")[0]
@@ -60,7 +60,7 @@ func getClientIP(r *http.Request) string {
 	return host
 }
 
-func generateRequestID() string {
+func GenerateRequestID() string {
 	b := make([]byte, 12)
 	_, _ = rand.Read(b)
 	return hex.EncodeToString(b)
