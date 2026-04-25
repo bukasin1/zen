@@ -55,7 +55,7 @@
   - pluggable logger interface
 
 ## Graceful Lifecycle Management
-- [ ] Phase 16 — Graceful shutdown + lifecycle hooks
+- [x] Phase 16 — Graceful shutdown + lifecycle hooks
   - shutdown signals (SIGINT, SIGTERM)
   - cleanup hooks
   - server draining
