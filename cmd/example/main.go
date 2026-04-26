@@ -157,6 +157,10 @@ func main() {
 		Age   int    `json:"age" validate:"required,min=18,max=100" msg:"Age must be between 18 and 100"`
 	}
 
+	app.RegisterService("cache", func() interface{} {
+		return new(CreateUserDTO)
+	})
+
 	app.Post("/users", func(c *framework.Context) {
 		var req CreateUserDTO
 
@@ -177,9 +181,12 @@ func main() {
 		// }
 		// fmt.Println("raw body unmarshalled:", req)
 
+		cache := app.Service("cache").(*CreateUserDTO)
+
 		c.JSON(201, map[string]any{
 			"message": "user created",
 			"user":    req,
+			"cache":   cache,
 		})
 	})
 

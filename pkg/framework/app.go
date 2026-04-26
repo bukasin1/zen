@@ -6,11 +6,18 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
 	"github.com/Danieljosh-uduma/zen/pkg/framework/share/logger"
 )
+
+type serviceEntry struct {
+	once sync.Once
+	init func() any
+	inst any
+}
 
 type App struct {
 	router            *Router
@@ -27,7 +34,8 @@ type App struct {
 
 	shutdownTimeout time.Duration
 
-	config Config
+	config   Config
+	services map[string]*serviceEntry
 }
 
 func New() *App {
@@ -43,7 +51,8 @@ func New() *App {
 
 		shutdownTimeout: cfg.HTTP.ShutdownTimeout,
 
-		config: cfg,
+		config:   cfg,
+		services: make(map[string]*serviceEntry),
 	}
 
 	return app
@@ -121,6 +130,29 @@ func (a *App) Use(m Middleware) {
 
 func (a *App) UseSystem(m Middleware) {
 	a.systemMiddlewares = append(a.systemMiddlewares, m)
+}
+
+func (a *App) RegisterService(name string, init func() any) {
+	if _, exists := a.services[name]; exists {
+		panic("service already registered: " + name)
+	}
+
+	a.services[name] = &serviceEntry{
+		init: init,
+	}
+}
+
+func (a *App) Service(name string) any {
+	entry, ok := a.services[name]
+	if !ok {
+		panic("service not found: " + name)
+	}
+
+	entry.once.Do(func() {
+		entry.inst = entry.init()
+	})
+
+	return entry.inst
 }
 
 func (a *App) Static(path, dir string) {
