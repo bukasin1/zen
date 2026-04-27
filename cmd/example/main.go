@@ -10,6 +10,23 @@ import (
 	"github.com/Danieljosh-uduma/zen/pkg/framework/share/logger"
 )
 
+type MyValidator struct{}
+
+type AuthUser struct {
+	ID   string `json:"id"`
+	Role string `json:"role"`
+}
+
+func (v *MyValidator) Validate(ctx context.Context, token string) (any, error) {
+	// decode JWT, validate signature, etc.
+	// return user struct
+
+	return AuthUser{
+		ID:   "123",
+		Role: "admin",
+	}, nil
+}
+
 func TestMiddleware(handler framework.HandlerFunc) framework.HandlerFunc {
 	return func(c *framework.Context) {
 		fmt.Println("test api middleware")
@@ -52,6 +69,11 @@ func main() {
 	// System middlewares are auto installed
 	// app.Use(framework.Recovery())
 	// app.Use(framework.Logger())
+
+	validator := &MyValidator{}
+
+	// attach auth parser globally
+	app.Use(framework.AuthMiddleware(validator))
 
 	api := app.Group("/api")
 	api.Use(TestMiddleware)
@@ -127,6 +149,16 @@ func main() {
 			"status": "server running",
 		})
 	})
+
+	// protected route
+	app.Get("/me",
+		framework.RequireAuth()(
+			func(c *framework.Context) {
+				user := c.MustUser()
+				c.SuccessOK(user)
+			},
+		),
+	)
 
 	app.Post("/posts/:postId/comments/:commentId", func(c *framework.Context) {
 		c.JSON(201, map[string]string{

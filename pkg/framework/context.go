@@ -53,6 +53,9 @@ type Context struct {
 	afterResponse     []func(c *Context)
 
 	logger logger.Logger
+
+	// user represents the authenticated user
+	user any
 }
 
 func NewContext(w http.ResponseWriter, r *http.Request, logger logger.Logger) *Context {
@@ -472,6 +475,31 @@ func (c *Context) LogWarn(msg string, fields logger.Fields) {
 
 func (c *Context) LogDebug(msg string, fields logger.Fields) {
 	c.logger.Debug(msg, fields)
+}
+
+// SetUser sets the authenticated user in the context.
+// It should be called by an authentication middleware.
+func (c *Context) SetUser(user any) {
+	c.user = user
+}
+
+// User returns the authenticated user.
+func (c *Context) User() any {
+	return c.user
+}
+
+func (c *Context) UserOK() (any, bool) {
+	if c.user == nil {
+		return nil, false
+	}
+	return c.user, true
+}
+
+func (c *Context) MustUser() any {
+	if c.user == nil {
+		panic(frameworkErrors.New("user not found in context", 401))
+	}
+	return c.user
 }
 
 // ----------------- Context Helpers End ----------------------------

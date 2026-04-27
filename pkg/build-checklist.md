@@ -77,7 +77,7 @@
   - race-condition awareness
 
 ## Authentication & Authorization
-- [ ] Phase 19 — Auth middleware
+- [x] Phase 19 — Auth middleware
   - JWT/session support
   - request context user injection
 
