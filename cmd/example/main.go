@@ -47,7 +47,7 @@ type Context struct {
 }
 
 func (c *Context) SuccessOK(data any) {
-	fmt.Println("New context...")
+	fmt.Println("New context...", c.Request.RemoteAddr)
 	c.JSON(200, data)
 }
 
