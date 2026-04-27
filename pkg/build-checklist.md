@@ -71,7 +71,7 @@
   -[ ] optional file support (.env / yaml)
 
 ## Concurrency-Safe Services
-- [ ] Phase 18 — Shared services safety
+- [x] Phase 18 — Shared services safety
   - safe singleton patterns
   - connection reuse (DB, clients)
   - race-condition awareness

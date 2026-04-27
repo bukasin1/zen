@@ -26,7 +26,6 @@ type App struct {
 
 	logger logger.Logger
 
-	// ✅ NEW
 	server *http.Server
 
 	onStartHooks    []func(ctx context.Context) error
@@ -34,8 +33,9 @@ type App struct {
 
 	shutdownTimeout time.Duration
 
-	config   Config
-	services map[string]*serviceEntry
+	config     Config
+	services   map[string]*serviceEntry
+	servicesMu sync.RWMutex
 }
 
 func New() *App {
@@ -132,9 +132,19 @@ func (a *App) UseSystem(m Middleware) {
 	a.systemMiddlewares = append(a.systemMiddlewares, m)
 }
 
+// RegisterService registers a service with the application.
+//
+// Note: Service init functions must be idempotent and side-effect safe.
 func (a *App) RegisterService(name string, init func() any) {
+	a.servicesMu.Lock()
+	defer a.servicesMu.Unlock()
+
 	if _, exists := a.services[name]; exists {
 		panic("service already registered: " + name)
+	}
+
+	if init == nil {
+		panic("service init function cannot be nil: " + name)
 	}
 
 	a.services[name] = &serviceEntry{
@@ -142,8 +152,12 @@ func (a *App) RegisterService(name string, init func() any) {
 	}
 }
 
+// Service returns the service with the given name.
 func (a *App) Service(name string) any {
+	a.servicesMu.RLock()
 	entry, ok := a.services[name]
+	a.servicesMu.RUnlock()
+
 	if !ok {
 		panic("service not found: " + name)
 	}
@@ -153,6 +167,17 @@ func (a *App) Service(name string) any {
 	})
 
 	return entry.inst
+}
+
+// GetService returns the service with the given name.
+// It is a type-safe wrapper around the App Service function.
+//
+// Note:
+// If the service is not found, it will panic.
+// If the service type assertion fails, it will panic.
+func GetService[T any](a *App, name string) T {
+	svc := a.Service(name)
+	return svc.(T)
 }
 
 func (a *App) Static(path, dir string) {

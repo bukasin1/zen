@@ -181,7 +181,7 @@ func main() {
 		// }
 		// fmt.Println("raw body unmarshalled:", req)
 
-		cache := app.Service("cache").(*CreateUserDTO)
+		cache := framework.GetService[*CreateUserDTO](app, "cache")
 
 		c.JSON(201, map[string]any{
 			"message": "user created",
