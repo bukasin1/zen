@@ -1,4 +1,4 @@
-# Go Backend Framework Learning Roadmap (v3)
+# Go Backend Framework Learning Roadmap (v4)
 
 ## 🧱 Core Engine (Foundation — Already Strong)
 - [x] Phase 0 — Project vision and API design
@@ -86,13 +86,20 @@
   - per-IP / per-route limits
   - middleware integration
 
+
+## Protection Layer
+- [ ] Phase 21 — Request Body Limits (DoS protection)
+- [ ] Phase 22 — CORS middleware
+- [ ] Phase 23 — Timeout middleware
+- [ ] Phase 24 — Panic classification (operational vs programmer errors)
+
 ## Caching Layer
-- [ ] Phase 21 — Caching system
+- [ ] Phase 25 — Caching system
   - in-memory cache
   - optional Redis adapter
 
 ## Observability & Metrics
-- [ ] Phase 22 — Metrics + tracing
+- [ ] Phase 26 — Metrics + tracing
   - request metrics
   - latency tracking
   - Prometheus-style hooks (optional)
@@ -102,17 +109,17 @@
 # 🧪 Developer Experience (MAKES IT NICE TO USE)
 
 ## Testing Support
-- [ ] Phase 23 — Testing utilities
+- [ ] Phase 27 — Testing utilities
   - test context builder
   - request simulation helpers
 
 ## Documentation Generation
-- [ ] Phase 24 — Docs system
+- [ ] Phase 28 — Docs system
   - route introspection
   - OpenAPI/Swagger generation (optional)
 
 ## Performance Benchmarking
-- [ ] Phase 25 — Benchmarking tools
+- [ ] Phase 29 — Benchmarking tools
   - route performance tests
   - middleware benchmarks
 
@@ -121,17 +128,17 @@
 # 🔌 Optional Power Features (ADVANCED / NOT REQUIRED)
 
 ## Dependency Injection (DELAYED ON PURPOSE)
-- [ ] Phase 26 — Dependency Injection container
+- [ ] Phase 30 — Dependency Injection container
   - constructor-based resolution
   - singleton + transient lifetimes
 
 ## Background Jobs
-- [ ] Phase 27 — Worker / job system
+- [ ] Phase 31 — Worker / job system
   - async task execution
   - queue abstraction
 
 ## Plugin Architecture
-- [ ] Phase 28 — Plugin system
+- [ ] Phase 32 — Plugin system
   - extensibility model
   - middleware/plugins registration
 
@@ -140,21 +147,21 @@
 # 🛠️ CLI & Tooling (FINAL LAYER)
 
 ## CLI Scaffolding
-- [ ] Phase 29 — CLI tool
+- [ ] Phase 33 — CLI tool
   - project generator
   - module scaffolding
 
 ## Dev Experience Tools
-- [ ] Phase 30 — Dev server + hot reload
+- [ ] Phase 34 — Dev server + hot reload
 
 ## Plugin Installer
-- [ ] Phase 31 — Plugin installer system
+- [ ] Phase 35 — Plugin installer system
 
 ---
 
 # 🚀 Production Readiness Finalization
 
-- [ ] Phase 32 — Release strategy
+- [ ] Phase 36 — Release strategy
   - versioning (semver)
   - packaging
   - deployment guidelines
