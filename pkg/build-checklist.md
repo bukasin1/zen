@@ -82,7 +82,7 @@
   - request context user injection
 
 ## Rate Limiting & Protection
-- [ ] Phase 20 — Rate limiting
+- [x] Phase 20 — Rate limiting
   - per-IP / per-route limits
   - middleware integration
 

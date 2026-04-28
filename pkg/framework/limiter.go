@@ -48,7 +48,7 @@ func defaultKeyFn(c *Context) string {
 // It returns true if the request is allowed, and the entry for the key.
 // If the request is not allowed, it returns false and the entry for the key.
 //
-// This method is called by [RateLimit] or [RateLimit] middlewares.
+// This method is used internally by the rate limiting middleware.
 func (rl *RateLimiter) Allow(key string) (bool, *limiterEntry) {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
@@ -61,11 +61,12 @@ func (rl *RateLimiter) Allow(key string) (bool, *limiterEntry) {
 	entry, exists := rl.clients[key]
 
 	if !exists || now.After(entry.expiresAt) {
-		rl.clients[key] = &limiterEntry{
+		entry = &limiterEntry{
 			count:     1,
 			expiresAt: now.Add(rl.window),
 		}
-		return true, rl.clients[key]
+		rl.clients[key] = entry
+		return true, entry
 	}
 
 	if entry.count >= rl.limit {
@@ -78,6 +79,11 @@ func (rl *RateLimiter) Allow(key string) (bool, *limiterEntry) {
 
 func (rl *RateLimiter) cleanup(now time.Time) {
 	if now.Sub(rl.lastCleanup) < rl.cleanupPeriod {
+		return
+	}
+
+	if len(rl.clients) == 0 {
+		rl.lastCleanup = now
 		return
 	}
 
@@ -97,18 +103,25 @@ func (rl *RateLimiter) cleanup(now time.Time) {
 // This can allow ratelimiting of a specific route or endpoint request
 // Use [RateLimitIP] for IP-based rate limiting.
 func RateLimit(rl *RateLimiter, keyFn func(*Context) string) Middleware {
+	if keyFn == nil {
+		keyFn = defaultKeyFn
+	}
+
 	return func(next HandlerFunc) HandlerFunc {
 		return func(c *Context) {
 			key := keyFn(c)
 			res := rl.AllowDetailed(key)
 
 			if !res.Allowed {
+				c.Writer.Header().Set("X-RateLimit-Reset", res.ResetAt.UTC().Format(time.RFC1123))
+				c.Writer.Header().Set("Retry-After", strconv.Itoa(res.RetryAfter))
 				c.Fail(429, "rate limit exceeded")
 				return
 			}
 
 			c.Writer.Header().Set("X-RateLimit-Remaining", strconv.Itoa(res.Remaining))
-			c.Writer.Header().Set("X-RateLimit-Reset", strconv.FormatInt(res.ResetAt.Unix(), 10))
+			c.Writer.Header().Set("X-RateLimit-Reset", res.ResetAt.UTC().Format(time.RFC1123))
+			// c.Writer.Header().Set("X-RateLimit-Reset", strconv.FormatInt(res.ResetAt.Unix(), 10))
 
 			next(c)
 		}
@@ -127,25 +140,29 @@ func RateLimitIP(rl *RateLimiter) Middleware {
 
 // RateLimitResult is the result of a rate limit check.
 type RateLimitResult struct {
-	Allowed   bool
-	Remaining int
-	ResetAt   time.Time
+	Allowed    bool
+	Remaining  int
+	ResetAt    time.Time
+	RetryAfter int
 }
 
 func (rl *RateLimiter) AllowDetailed(key string) RateLimitResult {
 	allowed, entry := rl.Allow(key)
 
 	if allowed {
+		remaining := max(rl.limit-entry.count, 0)
+
 		return RateLimitResult{
 			Allowed:   true,
-			Remaining: rl.limit - entry.count,
+			Remaining: remaining,
 			ResetAt:   entry.expiresAt,
 		}
 	}
 	return RateLimitResult{
-		Allowed:   false,
-		Remaining: 0,
-		ResetAt:   entry.expiresAt,
+		Allowed:    false,
+		Remaining:  0,
+		ResetAt:    entry.expiresAt,
+		RetryAfter: int(time.Until(entry.expiresAt).Seconds()),
 	}
 }
 

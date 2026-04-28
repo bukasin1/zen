@@ -72,6 +72,8 @@ func main() {
 
 	validator := &MyValidator{}
 
+	rateLimiter := framework.NewRateLimiter(5, time.Second*30)
+
 	// attach auth parser globally
 	app.Use(framework.AuthMiddleware(validator))
 
@@ -149,7 +151,7 @@ func main() {
 		})
 	})
 
-	app.Get("/health", func(c *framework.Context) {
+	app.Route("/health").Use(framework.RateLimit(rateLimiter, nil)).Get(func(c *framework.Context) {
 		c.JSON(200, map[string]string{
 			"status": "server running",
 		})
