@@ -57,6 +57,8 @@ func cloneParams(p map[string]string) map[string]string {
 	return copy
 }
 
+// HandlerFunc is a function that handles an HTTP request.
+// It takes a *Context as an argument and returns nothing.
 type HandlerFunc func(*Context)
 
 type node struct {

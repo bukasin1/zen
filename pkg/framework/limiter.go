@@ -8,11 +8,13 @@ import (
 	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/utils"
 )
 
+// limiterEntry holds the count and expiration time for a key.
 type limiterEntry struct {
 	count     int
 	expiresAt time.Time
 }
 
+// RateLimiter is a simple in-memory rate limiter.
 type RateLimiter struct {
 	mu            sync.Mutex
 	limit         int
@@ -22,12 +24,18 @@ type RateLimiter struct {
 	cleanupPeriod time.Duration
 }
 
+// NewRateLimiter creates a new RateLimiter.
+//
+// limit is the maximum number of requests allowed in a window.
+// window is the time duration for the rate limit.
+//
+// Safe defaults are used for cleanupPeriod.
 func NewRateLimiter(limit int, window time.Duration) *RateLimiter {
 	return &RateLimiter{
 		limit:         limit,
 		window:        window,
 		clients:       make(map[string]*limiterEntry),
-		cleanupPeriod: window, // safe default
+		cleanupPeriod: window,
 	}
 }
 
@@ -35,6 +43,12 @@ func defaultKeyFn(c *Context) string {
 	return utils.GetClientIP(c.Request)
 }
 
+// Allow checks if a request with the given key is allowed.
+//
+// It returns true if the request is allowed, and the entry for the key.
+// If the request is not allowed, it returns false and the entry for the key.
+//
+// This method is called by [RateLimit] or [RateLimit] middlewares.
 func (rl *RateLimiter) Allow(key string) (bool, *limiterEntry) {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
@@ -76,7 +90,13 @@ func (rl *RateLimiter) cleanup(now time.Time) {
 	rl.lastCleanup = now
 }
 
-func RateLimitWithKey(rl *RateLimiter, keyFn func(*Context) string) Middleware {
+// RateLimit is a middleware that rate limits requests to a handler.
+//
+// It uses a custom key function to determine the key for each request.
+//
+// This can allow ratelimiting of a specific route or endpoint request
+// Use [RateLimitIP] for IP-based rate limiting.
+func RateLimit(rl *RateLimiter, keyFn func(*Context) string) Middleware {
 	return func(next HandlerFunc) HandlerFunc {
 		return func(c *Context) {
 			key := keyFn(c)
@@ -95,10 +115,17 @@ func RateLimitWithKey(rl *RateLimiter, keyFn func(*Context) string) Middleware {
 	}
 }
 
-func RateLimit(rl *RateLimiter) Middleware {
-	return RateLimitWithKey(rl, defaultKeyFn)
+// RateLimitIP is a middleware that rate limits requests to a handler based on IP address.
+//
+// It uses a default key function that uses the client IP address as the key for each reques.
+// You can use [RateLimitIP] for a simple IP-based rate limiting.
+//
+// To use a different key function, use [RateLimit].
+func RateLimitIP(rl *RateLimiter) Middleware {
+	return RateLimit(rl, defaultKeyFn)
 }
 
+// RateLimitResult is the result of a rate limit check.
 type RateLimitResult struct {
 	Allowed   bool
 	Remaining int

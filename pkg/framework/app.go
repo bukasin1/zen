@@ -124,10 +124,21 @@ func (a *App) SetLogger(l logger.Logger) {
 	a.logger = l
 }
 
+// Use adds a middleware to the application.
+//
+// The middleware will be executed in the order they are added.
+//
+// Note:
+// System middlewares are executed after regular middlewares.
 func (a *App) Use(m Middleware) {
 	a.middlewares = append(a.middlewares, m)
 }
 
+// UseSystem adds a system middleware to the application.
+//
+// Note:
+// System middlewares are executed after regular middlewares.
+// This function should be called by the framework itself or by extensions, not by the user.
 func (a *App) UseSystem(m Middleware) {
 	a.systemMiddlewares = append(a.systemMiddlewares, m)
 }

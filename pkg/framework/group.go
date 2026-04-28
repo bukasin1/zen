@@ -26,8 +26,26 @@ func (g *Group) Group(prefix string) *Group {
 	}
 }
 
+// Use adds middleware to the group.
+// Middlewares added to a group will be applied to all handlers in that group.
+// Call this before any route definitions (Get, Post, etc).
 func (g *Group) Use(m ...Middleware) {
 	g.middlewares = append(g.middlewares, m...)
+}
+
+// Route returns a new RouteBuilder for the given path.
+// It is used to define a new route under the current group.
+// Example:
+//
+//	api := app.Group("/api")
+//	userRoutes := api.Group("/users")
+//	userRoutes.Route("/{id}").Get(getUser)
+func (g *Group) Route(path string) *RouteBuilder {
+	return &RouteBuilder{
+		app:   g.app,
+		path:  g.prefix + path,
+		group: g,
+	}
 }
 
 func (g *Group) Get(path string, handler HandlerFunc) {

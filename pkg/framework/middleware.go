@@ -20,6 +20,7 @@ func chainMiddlewares(h HandlerFunc, middlewares []Middleware) HandlerFunc {
 	return h
 }
 
+// Recovery is a middleware that recovers from panics and returns a 500 error.
 func Recovery() Middleware {
 	return func(next HandlerFunc) HandlerFunc {
 		return func(c *Context) {
@@ -48,6 +49,17 @@ func Recovery() Middleware {
 	}
 }
 
+// Logger is a middleware that logs requests to the console.
+//
+// It logs the following information:
+// - Request ID
+// - Timestamp
+// - HTTP method
+// - HTTP status code
+// - Request path
+// - Request duration
+// - Request size
+// - Client IP address
 func Logger() Middleware {
 	return func(next HandlerFunc) HandlerFunc {
 		return func(c *Context) {
