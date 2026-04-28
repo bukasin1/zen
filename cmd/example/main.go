@@ -138,7 +138,12 @@ func main() {
 	app.StaticOld("/static2", "./cmd/example/static")
 	// app.Static("/", "./cmd/example/public")
 
-	app.Get("/home", func(c *framework.Context) {
+	app.Route("/home").Use(func(next framework.HandlerFunc) framework.HandlerFunc {
+		return func(c *framework.Context) {
+			fmt.Println("home middleware")
+			next(c)
+		}
+	}).Get(func(c *framework.Context) {
 		c.JSON(200, map[string]string{
 			"status": "Welcome to Zen sample use!",
 		})
@@ -151,14 +156,10 @@ func main() {
 	})
 
 	// protected route
-	app.Get("/me",
-		framework.RequireAuth()(
-			func(c *framework.Context) {
-				user := c.MustUser()
-				c.SuccessOK(user)
-			},
-		),
-	)
+	app.Route("/me").Use(framework.RequireAuth()).Get(func(c *framework.Context) {
+		user := c.MustUser()
+		c.SuccessOK(user)
+	})
 
 	app.Post("/posts/:postId/comments/:commentId", func(c *framework.Context) {
 		c.JSON(201, map[string]string{
