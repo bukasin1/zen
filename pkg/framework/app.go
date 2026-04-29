@@ -47,13 +47,10 @@ func New() *App {
 		// auto install system middlewares
 		systemMiddlewares: []Middleware{Logger(), Recovery()},
 
-		logger: logger.NewConsoleLogger(cfg.Log.Pretty),
-
-		shutdownTimeout: cfg.HTTP.ShutdownTimeout,
-
-		config:   cfg,
 		services: make(map[string]*serviceEntry),
 	}
+
+	app.SetAppConfig(cfg)
 
 	return app
 }
@@ -72,21 +69,9 @@ func (a *App) SetAppConfig(cfg Config) {
 	if cfg.Env != "" {
 		a.config.Env = cfg.Env
 	}
-	if cfg.HTTP.Addr != "" {
-		a.config.HTTP.Addr = cfg.HTTP.Addr
-	}
-	if cfg.HTTP.ShutdownTimeout != 0 {
-		a.config.HTTP.ShutdownTimeout = cfg.HTTP.ShutdownTimeout
-	}
-	if cfg.Log.Level != "" {
-		a.config.Log.Level = cfg.Log.Level
-	}
+	a.SetHTTPConfig(cfg.HTTP)
 
-	a.config.Log.Pretty = cfg.Log.Pretty
-	a.config.Log.EnableJSON = cfg.Log.EnableJSON
-
-	a.logger = logger.NewConsoleLogger(a.config.Log.Pretty)
-	a.shutdownTimeout = a.config.HTTP.ShutdownTimeout
+	a.SetLoggerConfig(cfg.Log)
 }
 
 // Sets App's HTTP configuration after instantiation.
@@ -117,7 +102,14 @@ func (a *App) SetLoggerConfig(l LogConfig) {
 	a.config.Log.Pretty = l.Pretty
 	a.config.Log.EnableJSON = l.EnableJSON
 
-	a.logger = logger.NewConsoleLogger(a.config.Log.Pretty)
+	// set default console logger for app if logger is nil
+	if a.logger == nil {
+		a.SetLogger(logger.NewConsoleLogger(a.config.Log.Pretty))
+	} else {
+		if logger, ok := a.logger.(*logger.ConsoleLogger); ok {
+			logger.Pretty = a.config.Log.Pretty
+		}
+	}
 }
 
 func (a *App) SetLogger(l logger.Logger) {
@@ -280,10 +272,6 @@ func (a *App) LogDebug(msg string, fields logger.Fields) {
 
 func (a *App) buildAppHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// set default console logger for app if logger is nil
-		if a.logger == nil {
-			a.SetLogger(logger.NewConsoleLogger(a.config.Log.Pretty))
-		}
 		ctx := NewContext(w, r, a.logger)
 
 		handler := func(c *Context) {

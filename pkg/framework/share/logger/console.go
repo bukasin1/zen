@@ -8,11 +8,11 @@ import (
 )
 
 type ConsoleLogger struct {
-	pretty bool
+	Pretty bool
 }
 
 func NewConsoleLogger(pretty bool) *ConsoleLogger {
-	return &ConsoleLogger{pretty: pretty}
+	return &ConsoleLogger{Pretty: pretty}
 }
 
 func (l *ConsoleLogger) log(level string, msg string, fields Fields) {
@@ -27,7 +27,7 @@ func (l *ConsoleLogger) log(level string, msg string, fields Fields) {
 	var b []byte
 	var err error
 
-	if l.pretty {
+	if l.Pretty {
 		b, err = json.MarshalIndent(entry, "", "  ")
 	} else {
 		b, err = json.Marshal(entry)
