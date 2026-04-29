@@ -336,6 +336,8 @@ func (c *Context) HeaderValues(key string) []string {
 }
 
 // Body returns the raw request body as a byte slice.
+//
+// Currently overwrites any set limit from [MaxBodySize] middleware.
 func (c *Context) Body() ([]byte, error) {
 	if c.rawBody != nil {
 		return c.rawBody, nil
@@ -362,6 +364,20 @@ func (c *Context) Body() ([]byte, error) {
 
 // BindJSON binds the request body to the given target.
 // It returns an error if the request body is empty or invalid.
+//
+//	err := c.BindJSON(&payload)
+//
+//	if err != nil {
+//		var appErr *frameworkErrors.AppError
+//		if errors.As(err, &appErr) {
+//			// structured handling
+//			c.Error(appErr.Status, appErr.Message, appErr.Code, appErr.Details)
+//			return
+//		}
+//
+//		// fallback
+//		c.Fail(400, err.Error())
+//	}
 func (c *Context) BindJSON(target any) error {
 	if c.Request.Body == nil {
 		return http.ErrBodyNotAllowed
@@ -374,10 +390,15 @@ func (c *Context) BindJSON(target any) error {
 
 	err := decoder.Decode(target)
 	if err != nil {
+		c.LogError("bind json failed", logger.Fields{
+			"error": err.Error(),
+		})
+
 		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
-			return frameworkErrors.New(err.Error(), http.StatusRequestEntityTooLarge)
+			return frameworkErrors.New("Request body too large", http.StatusRequestEntityTooLarge)
 		}
-		return frameworkErrors.New(err.Error(), http.StatusBadRequest)
+
+		return frameworkErrors.New("invalid JSON payload", 400)
 	}
 
 	// if decoder.More() {
@@ -399,6 +420,22 @@ func (c *Context) MustBindJSON(target any) {
 	}
 }
 
+// BindAndValidate binds the request body to the given target and validates it.
+// It returns an error if the request body is empty or invalid.
+//
+//	err := c.BindAndValidate(&payload)
+//
+//	if err != nil {
+//		var appErr *frameworkErrors.AppError
+//		if errors.As(err, &appErr) {
+//			// structured handling
+//			c.Error(appErr.Status, appErr.Message, appErr.Code, appErr.Details)
+//			return
+//		}
+//
+//		// fallback
+//		c.Fail(400, err.Error())
+//	}
 func (c *Context) BindAndValidate(target any) error {
 	if err := c.BindJSON(target); err != nil {
 		return err
