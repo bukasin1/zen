@@ -29,9 +29,15 @@ func (l *DevConsoleLogger) log(level string, color string, msg string, fields Fi
 		case "addr":
 			fmt.Printf(" on %shttp://localhost%v%s", utils.ColorYellow, v, utils.ColorReset)
 			continue
+		case "status":
+			statusCol := utils.StatusColor(v.(int))
+			v = fmt.Sprintf("%s%d%s", statusCol, v, utils.ColorReset)
+		case "method":
+			v = fmt.Sprintf("%s%s%s", utils.ColorBlue, v, utils.ColorReset)
 		default:
-			fmt.Printf(" %s=%v", k, v)
 		}
+
+		fmt.Printf(" %s=%v", k, v)
 	}
 
 	fmt.Println()

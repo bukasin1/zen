@@ -523,18 +523,30 @@ func (c *Context) Duration() time.Duration {
 }
 
 func (c *Context) LogInfo(msg string, fields logger.Fields) {
+	if c.logger == nil {
+		return
+	}
 	c.logger.Info(msg, fields)
 }
 
 func (c *Context) LogError(msg string, fields logger.Fields) {
+	if c.logger == nil {
+		return
+	}
 	c.logger.Error(msg, fields)
 }
 
 func (c *Context) LogWarn(msg string, fields logger.Fields) {
+	if c.logger == nil {
+		return
+	}
 	c.logger.Warn(msg, fields)
 }
 
 func (c *Context) LogDebug(msg string, fields logger.Fields) {
+	if c.logger == nil {
+		return
+	}
 	c.logger.Debug(msg, fields)
 }
 

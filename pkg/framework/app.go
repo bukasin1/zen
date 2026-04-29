@@ -243,15 +243,47 @@ func (a *App) runStartHooks(ctx context.Context) error {
 func (a *App) runShutdownHooks(ctx context.Context) {
 	for _, hook := range a.onShutdownHooks {
 		if err := hook(ctx); err != nil {
-			a.logger.Error("shutdown hook failed", logger.Fields{
+			a.LogError("shutdown hook failed", logger.Fields{
 				"error": err.Error(),
 			})
 		}
 	}
 }
 
+func (a *App) LogInfo(msg string, fields logger.Fields) {
+	if a.logger == nil {
+		return
+	}
+	a.logger.Info(msg, fields)
+}
+
+func (a *App) LogError(msg string, fields logger.Fields) {
+	if a.logger == nil {
+		return
+	}
+	a.logger.Error(msg, fields)
+}
+
+func (a *App) LogWarn(msg string, fields logger.Fields) {
+	if a.logger == nil {
+		return
+	}
+	a.logger.Warn(msg, fields)
+}
+
+func (a *App) LogDebug(msg string, fields logger.Fields) {
+	if a.logger == nil {
+		return
+	}
+	a.logger.Debug(msg, fields)
+}
+
 func (a *App) buildAppHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// set default console logger for app if logger is nil
+		if a.logger == nil {
+			a.SetLogger(logger.NewConsoleLogger(a.config.Log.Pretty))
+		}
 		ctx := NewContext(w, r, a.logger)
 
 		handler := func(c *Context) {
@@ -278,7 +310,7 @@ func (a *App) Run(_ string) error {
 
 	// 1. Run startup hooks
 	if err := a.runStartHooks(rootCtx); err != nil {
-		a.logger.Error("startup hook failed", logger.Fields{
+		a.LogError("startup hook failed", logger.Fields{
 			"error": err.Error(),
 		})
 		return err
@@ -286,12 +318,12 @@ func (a *App) Run(_ string) error {
 
 	// 2. Start server in goroutine
 	go func() {
-		a.logger.Info("server starting", logger.Fields{
+		a.LogInfo("server starting", logger.Fields{
 			"addr": addr,
 		})
 
 		if err := a.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			a.logger.Error("server error", logger.Fields{
+			a.LogError("server error", logger.Fields{
 				"error": err.Error(),
 			})
 		}
@@ -304,7 +336,7 @@ func (a *App) Run(_ string) error {
 	sig := <-quit
 	signal.Stop(quit)
 
-	a.logger.Info("shutdown signal received", logger.Fields{
+	a.LogInfo("shutdown signal received", logger.Fields{
 		"signal": sig.String(),
 	})
 
@@ -314,17 +346,17 @@ func (a *App) Run(_ string) error {
 
 	// 5. Graceful shutdown (drains active requests)
 	if err := a.server.Shutdown(ctx); err != nil {
-		a.logger.Error("server shutdown failed", logger.Fields{
+		a.LogError("server shutdown failed", logger.Fields{
 			"error": err.Error(),
 		})
 	} else {
-		a.logger.Info("server shutdown complete", nil)
+		a.LogInfo("server shutdown complete", nil)
 	}
 
 	// 6. Run shutdown hooks AFTER draining
 	a.runShutdownHooks(ctx)
 
-	a.logger.Info("application shutdown complete", nil)
+	a.LogInfo("application shutdown complete", nil)
 
 	return nil
 }

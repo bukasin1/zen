@@ -70,14 +70,12 @@ func Logger() Middleware {
 					status = http.StatusOK
 				}
 
-				statusCol := utils.StatusColor(status)
-
 				c.LogInfo("request completed", logger.Fields{
-					"status":    fmt.Sprintf("%s%d%s", statusCol, status, utils.ColorReset),
+					"status":    status,
 					"duration":  utils.FormatDuration(c.Duration()),
 					"size":      c.ResponseSize(),
 					"ip":        utils.GetClientIP(c.Request),
-					"method":    fmt.Sprintf("%s%s%s", utils.ColorBlue, c.Request.Method, utils.ColorReset),
+					"method":    c.Request.Method,
 					"path":      c.Request.URL.Path,
 					"requestID": c.RequestID(),
 				})
