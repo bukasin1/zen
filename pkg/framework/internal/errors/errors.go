@@ -31,6 +31,8 @@ func defaultCodeForStatus(status int) string {
 		return ErrNotFound
 	case 409:
 		return ErrConflict
+	case 413:
+		return ErrRequestBodyTooLarge
 	default:
 		return ErrInternal
 	}

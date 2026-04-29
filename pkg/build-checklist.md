@@ -88,7 +88,7 @@
 
 
 ## Protection Layer
-- [ ] Phase 21 — Request Body Limits (DoS protection)
+- [x] Phase 21 — Request Body Limits (DoS protection)
 - [ ] Phase 22 — CORS middleware
 - [ ] Phase 23 — Timeout middleware
 - [ ] Phase 24 — Panic classification (operational vs programmer errors)

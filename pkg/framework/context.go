@@ -1,6 +1,7 @@
 package framework
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -45,6 +46,8 @@ type Context struct {
 
 	params map[string]string
 	keys   map[string]interface{}
+
+	rawBody []byte
 
 	requestID string
 	startTime time.Time
@@ -334,13 +337,27 @@ func (c *Context) HeaderValues(key string) []string {
 
 // Body returns the raw request body as a byte slice.
 func (c *Context) Body() ([]byte, error) {
+	if c.rawBody != nil {
+		return c.rawBody, nil
+	}
+
 	if c.Request.Body == nil {
 		return nil, nil
 	}
 
 	defer c.Request.Body.Close()
 
-	return io.ReadAll(c.Request.Body)
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	c.rawBody = body
+
+	// restore body for future reads
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
+
+	return body, nil
 }
 
 // BindJSON binds the request body to the given target.
@@ -357,11 +374,18 @@ func (c *Context) BindJSON(target any) error {
 
 	err := decoder.Decode(target)
 	if err != nil {
-		return err
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
+			return frameworkErrors.New(err.Error(), http.StatusRequestEntityTooLarge)
+		}
+		return frameworkErrors.New(err.Error(), http.StatusBadRequest)
 	}
 
-	if decoder.More() {
-		return errors.New("request body must contain only one JSON object")
+	// if decoder.More() {
+	// 	return frameworkErrors.New("request body must contain only one JSON object", http.StatusBadRequest)
+	// }
+
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return frameworkErrors.New("request body must contain only one JSON object", http.StatusBadRequest)
 	}
 
 	return nil

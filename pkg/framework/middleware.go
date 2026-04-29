@@ -89,6 +89,44 @@ func Logger() Middleware {
 	}
 }
 
+// MaxBodySize is a middleware that limits the size of the request body.
+//
+// It reads the request body using http.MaxBytesReader.
+//
+// Parameters:
+//   - limit: The maximum size of the request body in bytes.
+//
+// Example:
+//
+//	app.Use(framework.MaxBodySize(10 * 1024 * 1024)) // 10MB limit
+//
+// Important: This middleware should be placed before any middleware that reads the request body.
+func MaxBodySize(limit int64) Middleware {
+	if limit <= 0 {
+		// TODO: Decide what to do when limit is 0 or less.
+		// Maybe just ignore it and let it be.
+		// Maybe set it to a default value. (1 << 20 // default 1MB)
+		// Maybe return an error.
+	}
+	return func(next HandlerFunc) HandlerFunc {
+		return func(c *Context) {
+			if c.Request.ContentLength > limit && c.Request.ContentLength != -1 {
+				c.Error(http.StatusRequestEntityTooLarge, "Request body too large", frameworkErrors.ErrRequestBodyTooLarge, nil)
+				return
+			}
+			if c.Request.Body != nil {
+				c.Request.Body = http.MaxBytesReader(
+					c.Writer,
+					c.Request.Body,
+					limit,
+				)
+			}
+
+			next(c)
+		}
+	}
+}
+
 func Logger1() Middleware {
 	return func(next HandlerFunc) HandlerFunc {
 		return func(c *Context) {

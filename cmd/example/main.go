@@ -196,34 +196,36 @@ func main() {
 		return new(CreateUserDTO)
 	})
 
-	app.Post("/users", func(c *framework.Context) {
-		var req CreateUserDTO
+	app.Route("/users").
+		Use(framework.MaxBodySize(55)).
+		Post(func(c *framework.Context) {
+			var req CreateUserDTO
 
-		c.MustBindAndValidate(&req)
+			c.MustBindAndValidate(&req)
 
-		// if err := c.BindAndValidate(&req); err != nil {
-		// 	c.Fail(400, err.Error())
-		// 	return
-		// }
-		fmt.Println("bindjson body unmarshalled:", req)
+			// if err := c.BindAndValidate(&req); err != nil {
+			// 	c.Fail(400, err.Error())
+			// 	return
+			// }
+			fmt.Println("bindjson body unmarshalled:", req)
 
-		// rawReqBody, _ := c.Body()
-		// fmt.Println("body:", rawReqBody, string(rawReqBody))
+			// rawReqBody, _ := c.Body()
+			// fmt.Println("body:", rawReqBody, string(rawReqBody))
 
-		// if err := json.Unmarshal(rawReqBody, &req); err != nil {
-		// 	c.Error(400, err.Error())
-		// 	return
-		// }
-		// fmt.Println("raw body unmarshalled:", req)
+			// if err := json.Unmarshal(rawReqBody, &req); err != nil {
+			// 	c.Error(400, err.Error())
+			// 	return
+			// }
+			// fmt.Println("raw body unmarshalled:", req)
 
-		cache := framework.GetService[*CreateUserDTO](app, "cache")
+			cache := framework.GetService[*CreateUserDTO](app, "cache")
 
-		c.JSON(201, map[string]any{
-			"message": "user created",
-			"user":    req,
-			"cache":   cache,
+			c.JSON(201, map[string]any{
+				"message": "user created",
+				"user":    req,
+				"cache":   cache,
+			})
 		})
-	})
 
 	app.Get("/error", func(c *framework.Context) {
 		c.AfterResponse(func(c *framework.Context) {
