@@ -368,8 +368,7 @@ func (c *Context) Body() ([]byte, error) {
 //	err := c.BindJSON(&payload)
 //
 //	if err != nil {
-//		var appErr *frameworkErrors.AppError
-//		if errors.As(err, &appErr) {
+//		if appErr, ok := frameworkErrors.AsAppError(err); ok {
 //			// structured handling
 //			c.Error(appErr.Status, appErr.Message, appErr.Code, appErr.Details)
 //			return
@@ -398,7 +397,7 @@ func (c *Context) BindJSON(target any) error {
 			return frameworkErrors.New("Request body too large", http.StatusRequestEntityTooLarge)
 		}
 
-		return frameworkErrors.New("invalid JSON payload", 400)
+		return frameworkErrors.New("invalid JSON payload", http.StatusBadRequest)
 	}
 
 	// if decoder.More() {
@@ -426,8 +425,7 @@ func (c *Context) MustBindJSON(target any) {
 //	err := c.BindAndValidate(&payload)
 //
 //	if err != nil {
-//		var appErr *frameworkErrors.AppError
-//		if errors.As(err, &appErr) {
+//		if appErr, ok := frameworkErrors.AsAppError(err); ok {
 //			// structured handling
 //			c.Error(appErr.Status, appErr.Message, appErr.Code, appErr.Details)
 //			return

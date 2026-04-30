@@ -1,5 +1,7 @@
 package errors
 
+import "errors"
+
 type AppError struct {
 	Message string
 	Code    string
@@ -46,4 +48,11 @@ func WithCode(err *AppError, code string) *AppError {
 func WithDetails(err *AppError, details any) *AppError {
 	err.Details = details
 	return err
+}
+
+func AsAppError(err error) (*AppError, bool) {
+	if ae, ok := errors.AsType[*AppError](err); ok {
+		return ae, true
+	}
+	return nil, false
 }
