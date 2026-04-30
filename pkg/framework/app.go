@@ -45,7 +45,7 @@ func New() *App {
 		router:      NewRouter(),
 		middlewares: []Middleware{},
 		// auto install system middlewares
-		systemMiddlewares: []Middleware{Logger(), Recovery()},
+		systemMiddlewares: []Middleware{RequestLogger(), Recovery()},
 
 		services: make(map[string]*serviceEntry),
 	}

@@ -69,6 +69,7 @@ func main() {
 	// System middlewares are auto installed
 	// app.Use(framework.Recovery())
 	// app.Use(framework.Logger())
+	app.Use(framework.CORS(framework.DefaultCORSConfig()))
 
 	validator := &MyValidator{}
 

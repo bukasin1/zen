@@ -49,7 +49,7 @@ func Recovery() Middleware {
 	}
 }
 
-// Logger is a middleware that logs requests to the console.
+// RequestLogger is a middleware that logs requests to the console.
 //
 // It logs the following information:
 // - Request ID
@@ -60,7 +60,7 @@ func Recovery() Middleware {
 // - Request duration
 // - Request size
 // - Client IP address
-func Logger() Middleware {
+func RequestLogger() Middleware {
 	return func(next HandlerFunc) HandlerFunc {
 		return func(c *Context) {
 

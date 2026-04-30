@@ -113,14 +113,14 @@ func RateLimit(rl *RateLimiter, keyFn func(*Context) string) Middleware {
 			res := rl.AllowDetailed(key)
 
 			if !res.Allowed {
-				c.Writer.Header().Set("X-RateLimit-Reset", res.ResetAt.UTC().Format(time.RFC1123))
-				c.Writer.Header().Set("Retry-After", strconv.Itoa(res.RetryAfter))
+				c.SetHeader("X-RateLimit-Reset", res.ResetAt.UTC().Format(time.RFC1123))
+				c.SetHeader("Retry-After", strconv.Itoa(res.RetryAfter))
 				c.Fail(429, "rate limit exceeded")
 				return
 			}
 
-			c.Writer.Header().Set("X-RateLimit-Remaining", strconv.Itoa(res.Remaining))
-			c.Writer.Header().Set("X-RateLimit-Reset", res.ResetAt.UTC().Format(time.RFC1123))
+			c.SetHeader("X-RateLimit-Remaining", strconv.Itoa(res.Remaining))
+			c.SetHeader("X-RateLimit-Reset", res.ResetAt.UTC().Format(time.RFC1123))
 			// c.Writer.Header().Set("X-RateLimit-Reset", strconv.FormatInt(res.ResetAt.Unix(), 10))
 
 			next(c)
