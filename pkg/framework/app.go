@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Danieljosh-uduma/zen/pkg/framework/share/logger"
+	"github.com/Danieljosh-uduma/zen/pkg/framework/logger"
 )
 
 type serviceEntry struct {

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Danieljosh-uduma/zen/pkg/framework"
-	"github.com/Danieljosh-uduma/zen/pkg/framework/share/logger"
+	"github.com/Danieljosh-uduma/zen/pkg/framework/logger"
 )
 
 type MyValidator struct{}

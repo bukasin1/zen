@@ -9,11 +9,11 @@ import (
 	"net/http"
 	"time"
 
+	frameworkErrors "github.com/Danieljosh-uduma/zen/pkg/framework/errors"
 	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/response"
 	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/utils"
 	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/validator"
-	frameworkErrors "github.com/Danieljosh-uduma/zen/pkg/framework/share/errors"
-	"github.com/Danieljosh-uduma/zen/pkg/framework/share/logger"
+	"github.com/Danieljosh-uduma/zen/pkg/framework/logger"
 )
 
 type contextKey string

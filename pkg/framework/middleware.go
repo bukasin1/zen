@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	frameworkErrors "github.com/Danieljosh-uduma/zen/pkg/framework/errors"
 	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/utils"
-	frameworkErrors "github.com/Danieljosh-uduma/zen/pkg/framework/share/errors"
-	"github.com/Danieljosh-uduma/zen/pkg/framework/share/logger"
+	"github.com/Danieljosh-uduma/zen/pkg/framework/logger"
 )
 
 type Middleware func(HandlerFunc) HandlerFunc
