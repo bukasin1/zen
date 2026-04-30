@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	frameworkErrors "github.com/Danieljosh-uduma/zen/pkg/framework/internal/errors"
 	"github.com/Danieljosh-uduma/zen/pkg/framework/internal/utils"
+	frameworkErrors "github.com/Danieljosh-uduma/zen/pkg/framework/share/errors"
 	"github.com/Danieljosh-uduma/zen/pkg/framework/share/logger"
 )
 
