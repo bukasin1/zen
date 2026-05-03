@@ -336,6 +336,15 @@ func (r *Router) FindRoute(method, path string) (HandlerFunc, map[string]string,
 
 	// check cache first
 	if cachedRoute, ok := r.cache[pathCacheKey]; ok {
+		// if normalized path is different from the original path, redirect
+		// This handles cases where the original path has multiple slashes
+		if len(normalizedPath) != len(path) && cachedRoute.redirect.isNil() {
+			return cachedRoute.handler, cloneParams(cachedRoute.params), true, &redirectInfo{
+				redirectPath: normalizedPath,
+				code:         http.StatusMovedPermanently,
+			}
+		}
+
 		return cachedRoute.handler, cloneParams(cachedRoute.params), true, cachedRoute.redirect
 	}
 
@@ -354,6 +363,15 @@ func (r *Router) FindRoute(method, path string) (HandlerFunc, map[string]string,
 		handler:  handler,
 		params:   cloneParams(params),
 		redirect: redirect,
+	}
+
+	// if normalized path is different from the original path, redirect
+	// This handles cases where the original path has multiple slashes
+	if len(normalizedPath) != len(path) && redirect.isNil() {
+		return handler, params, true, &redirectInfo{
+			redirectPath: normalizedPath,
+			code:         http.StatusMovedPermanently,
+		}
 	}
 
 	return handler, params, true, redirect
