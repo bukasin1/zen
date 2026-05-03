@@ -1,6 +1,7 @@
 package framework
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -14,17 +15,22 @@ func normalizeRoutePath(path string) string {
 	}
 
 	// Ensure leading slash
-	path = "/" + strings.Trim(path, "/")
+	cleanPath := "/" + strings.Trim(path, "/")
 
 	// Collapse multiple slashes: "/users//1" -> "/users/1"
-	path = multiSlashRegex.ReplaceAllString(path, "/")
+	cleanPath = multiSlashRegex.ReplaceAllString(cleanPath, "/")
 
 	// Remove trailing slash (except root)
-	if len(path) > 1 && strings.HasSuffix(path, "/") {
-		path = strings.TrimSuffix(path, "/")
+	if len(cleanPath) > 1 && strings.HasSuffix(cleanPath, "/") {
+		cleanPath = strings.TrimSuffix(cleanPath, "/")
 	}
 
-	return path
+	// add back trailing slash if the original path had one
+	if path[len(path)-1] == '/' && cleanPath[len(cleanPath)-1] != '/' {
+		return cleanPath + "/"
+	}
+
+	return cleanPath
 }
 
 func getPathParts(path string) (string, []string) {
@@ -116,13 +122,18 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 	path, pathParts := getPathParts(normalizeRoutePath(path))
 
 	if _, ok := r.routeTrees[method]; !ok {
-		r.routeTrees[method] = &node{}
+		r.routeTrees[method] = &node{
+			segment: method,
+		}
 	}
 
 	currentMethodNode := r.routeTrees[method]
 	var paramKeys []string
 
 	for i, part := range pathParts {
+		if part == "" {
+			continue
+		}
 		// wildcard
 		if strings.HasPrefix(part, "*") {
 			// enforce last segment
@@ -135,14 +146,14 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 			}
 
 			currentMethodNode.wildcardChild = &node{
-				segment:     part,
+				segment:     strings.Split(path, "*")[0],
 				wildcardKey: strings.TrimPrefix(part, "*"),
 			}
 
-			// set handler to base wildcard parent node
-			if currentMethodNode.handler == nil {
-				currentMethodNode.handler = handler
-			}
+			// // set handler to base wildcard parent node
+			// if currentMethodNode.handler == nil {
+			// 	currentMethodNode.handler = handler
+			// }
 
 			currentMethodNode = currentMethodNode.wildcardChild
 			break
@@ -178,50 +189,84 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 
 	// set handler
 	if currentMethodNode.handler != nil {
-		panic("duplicate route registration")
+		panic(fmt.Sprintf("duplicate route registration for %s %s %v", method, path))
 	}
 	currentMethodNode.handler = handler
 	currentMethodNode.paramKeys = paramKeys
 }
 
+// processess wildcard node.
+// merge wildcard key and remaining path to params.
+func processWildcard(wildcardNode *node, path string, params *map[string]string) *node {
+	strippedPath := strings.Split(path, wildcardNode.segment)
+	if len(strippedPath) < 2 {
+		return wildcardNode
+	}
+
+	remainingPath := strippedPath[1]
+
+	wildcardKey := wildcardNode.wildcardKey
+	if wildcardKey == "" {
+		wildcardKey = "*"
+	}
+	if *params == nil {
+		*params = make(map[string]string)
+	}
+	(*params)[wildcardKey] = remainingPath
+	return wildcardNode
+}
+
 func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]string, bool) {
-	path, pathParts := getPathParts(path)
+	if methodNode == nil {
+		return nil, nil, false
+	}
+
+	_, pathParts := getPathParts(path)
 
 	var params map[string]string
 
 	currentMethodNode := methodNode
 	var paramValues []string
+	seenWildcard := currentMethodNode.wildcardChild
 
-	for i, part := range pathParts {
+	for _, part := range pathParts {
+		if part == "" {
+			continue
+		}
 		// 1.check if child exists for static part first (takes priority)
 		if child, ok := currentMethodNode.children[part]; ok {
 			currentMethodNode = child
+			if currentMethodNode.wildcardChild != nil {
+				// store the wildcard child for later use if needed
+				seenWildcard = currentMethodNode.wildcardChild
+			}
 			continue
 		}
 
 		// 2. fallback to param child
-		if currentMethodNode.paramChild != nil {
+		if currentMethodNode.paramChild != nil && part != "" {
 			paramValues = append(paramValues, part)
 			currentMethodNode = currentMethodNode.paramChild
+			if currentMethodNode.wildcardChild != nil {
+				// store the wildcard child for later use if needed
+				seenWildcard = currentMethodNode.wildcardChild
+			}
 			continue
 		}
 
 		// 3. fallback to wildcard child
-		if currentMethodNode.wildcardChild != nil {
-			remainingPath := strings.Join(pathParts[i:], "/")
-			wildcardKey := currentMethodNode.wildcardChild.wildcardKey
-			if wildcardKey == "" {
-				wildcardKey = "*"
-			}
-			if params == nil {
-				params = make(map[string]string)
-			}
-			params[wildcardKey] = remainingPath
-			currentMethodNode = currentMethodNode.wildcardChild
+		if seenWildcard != nil {
+			currentMethodNode = processWildcard(seenWildcard, path, &params)
 			break
 		}
 
 		return nil, nil, false
+	}
+
+	// check if any wildcard node was encountered during traversal and the current node doesn't have a handler
+	// this is the case for routes like /users and /users/*
+	if seenWildcard != nil && currentMethodNode.handler == nil {
+		currentMethodNode = processWildcard(seenWildcard, path, &params)
 	}
 
 	if currentMethodNode.handler == nil {
@@ -242,11 +287,11 @@ func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]stri
 
 func (r *Router) FindRoute(method, path string) (HandlerFunc, map[string]string, bool) {
 	// normalize path to handle multiple slashes and trailing slashes
-	path = normalizeRoutePath(path)
+	normalizedPath := normalizeRoutePath(path)
 
 	pathCacheKey := cacheKey{
 		method: method,
-		path:   path,
+		path:   normalizedPath,
 	}
 
 	// check cache first
@@ -259,7 +304,7 @@ func (r *Router) FindRoute(method, path string) (HandlerFunc, map[string]string,
 		return nil, nil, false
 	}
 
-	handler, params, ok := matchRouteTree(methodNode, path)
+	handler, params, ok := matchRouteTree(methodNode, normalizedPath)
 	if !ok || handler == nil {
 		return nil, nil, false
 	}
