@@ -270,7 +270,7 @@ func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]stri
 
 	// check if any wildcard node was encountered during traversal and the current node doesn't have a handler
 	// this is the case for routes like /users and /users/*
-	if seenWildcard != nil && currentMethodNode.handler == nil {
+	if seenWildcard != nil && seenWildcard != currentMethodNode && currentMethodNode.handler == nil {
 		currentMethodNode = processWildcard(seenWildcard, path, &params)
 	}
 
