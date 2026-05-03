@@ -360,7 +360,11 @@ func (r *Router) FindRoute(method, path string) (HandlerFunc, map[string]string,
 }
 
 func (r *Router) ServeHTTP(ctx *Context) {
-	if handler, params, ok, _ := r.FindRoute(ctx.Request.Method, ctx.Request.URL.Path); ok {
+	if handler, params, ok, redirect := r.FindRoute(ctx.Request.Method, ctx.Request.URL.Path); ok {
+		if !redirect.isNil() {
+			localRedirect(ctx.Writer, ctx.Request, redirect)
+			return
+		}
 		ctx.params = params
 		handler(ctx)
 		return
