@@ -34,7 +34,7 @@ func normalizeRoutePath(path string) string {
 }
 
 func getPathParts(path string) (string, []string) {
-	path = strings.Trim(path, "/")
+	// path = strings.Trim(path, "/")
 	var pathParts []string
 	if path == "" {
 		pathParts = []string{}
@@ -229,8 +229,13 @@ func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]stri
 	var paramValues []string
 	seenWildcard := currentMethodNode.wildcardChild
 
-	for _, part := range pathParts {
+	for i, part := range pathParts {
 		if part == "" {
+			// If part is empty and we are not at the first part, it means we have a trailing slash
+			// We should check if there is a wildcard child to handle this case
+			if i > 0 && seenWildcard == nil {
+				return nil, nil, false
+			}
 			continue
 		}
 		// 1.check if child exists for static part first (takes priority)
