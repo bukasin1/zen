@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"sync"
 )
 
 var multiSlashRegex = regexp.MustCompile(`/+`)
@@ -14,35 +15,49 @@ func normalizeRoutePath(path string) string {
 		return "/"
 	}
 
-	// Ensure leading slash
-	cleanPath := "/" + strings.Trim(path, "/")
+	// trim out leading and trailing spaces
+	path = strings.TrimSpace(path)
 
-	// Collapse multiple slashes: "/users//1" -> "/users/1"
-	cleanPath = multiSlashRegex.ReplaceAllString(cleanPath, "/")
+	// collapse repeated slashes
+	path = multiSlashRegex.ReplaceAllString(path, "/")
 
-	// Remove trailing slash (except root)
-	if len(cleanPath) > 1 && strings.HasSuffix(cleanPath, "/") {
-		cleanPath = strings.TrimSuffix(cleanPath, "/")
+	// preserve trailing slash info
+	hasTrailingSlash := len(path) > 1 && strings.HasSuffix(path, "/")
+
+	// trim outer slashes and ensure leading slash
+	path = "/" + strings.Trim(path, "/")
+
+	// restore trailing slash if needed
+	if hasTrailingSlash {
+		path += "/"
 	}
 
-	// add back trailing slash if the original path had one
-	if path[len(path)-1] == '/' && cleanPath[len(cleanPath)-1] != '/' {
-		return cleanPath + "/"
-	}
-
-	return cleanPath
+	return path
 }
 
-func getPathParts(path string) (string, []string) {
-	// TODO: test more, it is confusing sometimes?
-	// path = strings.Trim(path, "/")
-	var pathParts []string
-	if path == "" {
-		pathParts = []string{}
-	} else {
-		pathParts = strings.Split(path, "/")
+type parsedPath struct {
+	path             string
+	parts            []string
+	hasTrailingSlash bool
+}
+
+func parsePath(path string) parsedPath {
+	path = normalizeRoutePath(path)
+
+	hasTrailingSlash := len(path) > 1 && strings.HasSuffix(path, "/")
+
+	trimmed := strings.Trim(path, "/")
+
+	var parts []string
+	if trimmed != "" {
+		parts = strings.Split(trimmed, "/")
 	}
-	return path, pathParts
+
+	return parsedPath{
+		path:             path,
+		parts:            parts,
+		hasTrailingSlash: hasTrailingSlash,
+	}
 }
 
 // validateRoute checks if the route path is valid.
@@ -75,6 +90,7 @@ type node struct {
 	wildcardChild *node            // * or *filepath
 
 	handler     HandlerFunc
+	path        string
 	wildcardKey string
 	paramKeys   []string
 }
@@ -84,7 +100,7 @@ type cacheKey struct {
 	path   string
 }
 
-type cachedRoute struct {
+type routeCache struct {
 	handler  HandlerFunc
 	params   map[string]string
 	redirect *redirectInfo
@@ -102,7 +118,9 @@ type staticRoute struct {
 
 type Router struct {
 	routeTrees map[string]*node
-	cache      map[cacheKey]cachedRoute
+	cache      map[cacheKey]routeCache
+	cacheMu    sync.RWMutex
+	routeCount int
 
 	// TODO: cleanup(remove old routes registering)
 	routes       map[string][]route
@@ -114,31 +132,24 @@ type redirectInfo struct {
 	code         int    // http status code
 }
 
-func (r *redirectInfo) isNil() bool {
-	if r == nil {
-		return true
-	}
-
-	if r.redirectPath == "" && r.code == 0 {
-		return true
-	}
-
-	return false
-}
-
 func NewRouter() *Router {
 	return &Router{
 		routeTrees: make(map[string]*node),
-		cache:      make(map[cacheKey]cachedRoute),
+		cache:      make(map[cacheKey]routeCache),
 	}
 }
 
 func (r *Router) Handle(method, path string, handler HandlerFunc) {
 	// invalidate route cache on new route registration
-	r.cache = make(map[cacheKey]cachedRoute)
+	r.cacheMu.Lock()
+	r.cache = make(map[cacheKey]routeCache)
+	r.cacheMu.Unlock()
 	// normalize path to handle multiple slashes and trailing slashes
 	validateRoutePath(path)
-	path, pathParts := getPathParts(normalizeRoutePath(path))
+	parsed := parsePath(path)
+
+	path = parsed.path
+	pathParts := parsed.parts
 
 	if _, ok := r.routeTrees[method]; !ok {
 		r.routeTrees[method] = &node{
@@ -208,30 +219,35 @@ func (r *Router) Handle(method, path string, handler HandlerFunc) {
 
 	// set handler
 	if currentMethodNode.handler != nil {
-		panic(fmt.Sprintf("duplicate route registration for %s %s %v", method, path))
+		panic(fmt.Sprintf("duplicate route registration for %s %s. handler already registered with %s", method, path, currentMethodNode.path))
 	}
 	currentMethodNode.handler = handler
+	currentMethodNode.path = path
 	currentMethodNode.paramKeys = paramKeys
+	r.routeCount++
 }
 
 // processess wildcard node.
 // merge wildcard key and remaining path to params.
-func processWildcard(wildcardNode *node, path string, params *map[string]string) *node {
-	strippedPath := strings.Split(path, wildcardNode.segment)
-	if len(strippedPath) < 2 {
-		return wildcardNode
+func processWildcardKeyParams(wildcardNode *node, parsed parsedPath, wildcardIndex int, params *map[string]string) *node {
+	remainingParts := parsed.parts[wildcardIndex:]
+
+	wildcardValue := strings.Join(remainingParts, "/")
+
+	if parsed.hasTrailingSlash && wildcardValue != "" {
+		wildcardValue += "/"
 	}
 
-	remainingPath := strippedPath[1]
-
-	wildcardKey := wildcardNode.wildcardKey
-	if wildcardKey == "" {
-		wildcardKey = "*"
+	key := wildcardNode.wildcardKey
+	if key == "" {
+		key = "*"
 	}
+
 	if *params == nil {
 		*params = make(map[string]string)
 	}
-	(*params)[wildcardKey] = remainingPath
+
+	(*params)[key] = wildcardValue
 	return wildcardNode
 }
 
@@ -248,29 +264,27 @@ func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]stri
 		return nil, nil, false, nil
 	}
 
-	_, pathParts := getPathParts(path)
+	parsed := parsePath(path)
+
+	pathParts := parsed.parts
+	hasTrailingSlash := parsed.hasTrailingSlash
 
 	var params map[string]string
 
 	currentMethodNode := methodNode
 	var paramValues []string
-	seenWildcard := currentMethodNode.wildcardChild
+
+	var wildcardNode *node
+	var wildcardIndex int
 
 	for i, part := range pathParts {
-		if part == "" {
-			// If part is empty and we are not at the first part, it means we have a trailing slash
-			// We should check if there is a wildcard child to handle this case
-			if i > 0 && seenWildcard == nil {
-				return nil, nil, false, nil
-			}
-			continue
-		}
 		// 1.check if child exists for static part first (takes priority)
 		if child, ok := currentMethodNode.children[part]; ok {
 			currentMethodNode = child
 			if currentMethodNode.wildcardChild != nil {
 				// store the wildcard child for later use if needed
-				seenWildcard = currentMethodNode.wildcardChild
+				wildcardNode = currentMethodNode.wildcardChild
+				wildcardIndex = i + 1
 			}
 			continue
 		}
@@ -281,32 +295,41 @@ func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]stri
 			currentMethodNode = currentMethodNode.paramChild
 			if currentMethodNode.wildcardChild != nil {
 				// store the wildcard child for later use if needed
-				seenWildcard = currentMethodNode.wildcardChild
+				wildcardNode = currentMethodNode.wildcardChild
+				wildcardIndex = i + 1
 			}
 			continue
 		}
 
 		// 3. fallback to wildcard child
-		if seenWildcard != nil {
-			currentMethodNode = processWildcard(seenWildcard, path, &params)
+		if wildcardNode != nil {
+			currentMethodNode = processWildcardKeyParams(wildcardNode, parsed, wildcardIndex, &params)
 			break
 		}
 
 		return nil, nil, false, nil
 	}
 
-	var redirect *redirectInfo
-	if currentMethodNode.wildcardChild != nil && currentMethodNode.handler == nil && path[len(path)-1] != '/' {
-		redirect = &redirectInfo{
-			redirectPath: path + "/",
-			code:         http.StatusTemporaryRedirect,
-		}
+	if hasTrailingSlash && wildcardNode == nil {
+		return nil, nil, false, nil
+	}
+
+	if currentMethodNode.wildcardChild != nil && currentMethodNode.handler == nil && !hasTrailingSlash {
+		return currentMethodNode.wildcardChild.handler,
+			params,
+			true,
+			&redirectInfo{
+				redirectPath: parsed.path + "/",
+				code:         http.StatusTemporaryRedirect,
+			}
 	}
 
 	// check if any wildcard node was encountered during traversal and the current node doesn't have a handler
 	// this is the case for routes like /users and /users/*
-	if seenWildcard != nil && seenWildcard != currentMethodNode && (currentMethodNode.handler == nil || path[len(path)-1] == '/') {
-		currentMethodNode = processWildcard(seenWildcard, path, &params)
+	if currentMethodNode.handler == nil || hasTrailingSlash {
+		if wildcardNode != nil && wildcardNode != currentMethodNode {
+			currentMethodNode = processWildcardKeyParams(wildcardNode, parsed, wildcardIndex, &params)
+		}
 	}
 
 	if currentMethodNode.handler == nil {
@@ -322,7 +345,7 @@ func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]stri
 		}
 	}
 
-	return currentMethodNode.handler, params, true, redirect
+	return currentMethodNode.handler, params, true, nil
 }
 
 func (r *Router) FindRoute(method, path string) (HandlerFunc, map[string]string, bool, *redirectInfo) {
@@ -335,10 +358,14 @@ func (r *Router) FindRoute(method, path string) (HandlerFunc, map[string]string,
 	}
 
 	// check cache first
-	if cachedRoute, ok := r.cache[pathCacheKey]; ok {
+	r.cacheMu.RLock()
+	cachedRoute, ok := r.cache[pathCacheKey]
+	r.cacheMu.RUnlock()
+
+	if ok {
 		// if normalized path is different from the original path, redirect
 		// This handles cases where the original path has multiple slashes
-		if len(normalizedPath) != len(path) && cachedRoute.redirect.isNil() {
+		if len(normalizedPath) != len(path) && cachedRoute.redirect == nil {
 			return cachedRoute.handler, cloneParams(cachedRoute.params), true, &redirectInfo{
 				redirectPath: normalizedPath,
 				code:         http.StatusMovedPermanently,
@@ -359,15 +386,17 @@ func (r *Router) FindRoute(method, path string) (HandlerFunc, map[string]string,
 	}
 
 	// store in cache
-	r.cache[pathCacheKey] = cachedRoute{
+	r.cacheMu.Lock()
+	r.cache[pathCacheKey] = routeCache{
 		handler:  handler,
 		params:   cloneParams(params),
 		redirect: redirect,
 	}
+	r.cacheMu.Unlock()
 
 	// if normalized path is different from the original path, redirect
 	// This handles cases where the original path has multiple slashes
-	if len(normalizedPath) != len(path) && redirect.isNil() {
+	if len(normalizedPath) != len(path) && redirect == nil {
 		return handler, params, true, &redirectInfo{
 			redirectPath: normalizedPath,
 			code:         http.StatusMovedPermanently,
@@ -379,7 +408,7 @@ func (r *Router) FindRoute(method, path string) (HandlerFunc, map[string]string,
 
 func (r *Router) ServeHTTP(ctx *Context) {
 	if handler, params, ok, redirect := r.FindRoute(ctx.Request.Method, ctx.Request.URL.Path); ok {
-		if !redirect.isNil() {
+		if redirect != nil {
 			localRedirect(ctx.Writer, ctx.Request, redirect)
 			return
 		}
