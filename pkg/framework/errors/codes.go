@@ -9,4 +9,5 @@ const (
 	ErrInternal            = "INTERNAL_ERROR"
 	ErrValidation          = "VALIDATION_ERROR"
 	ErrRequestBodyTooLarge = "REQUEST_BODY_TOO_LARGE"
+	ErrRequestTimeout      = "REQUEST_TIMEOUT"
 )
