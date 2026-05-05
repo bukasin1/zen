@@ -11,14 +11,14 @@ type Config struct {
 }
 
 type HTTPConfig struct {
-	Addr            string
-	ShutdownTimeout time.Duration
+	Addr            string        // address to bind to (default: :8080)
+	ShutdownTimeout time.Duration // seconds to wait for server shutdown (default: 10s)
 }
 
 type LogConfig struct {
-	Level      string
-	Pretty     bool
-	EnableJSON bool
+	Level      string // log level (default: debug)
+	Pretty     bool   // pretty print logs (default: false)
+	EnableJSON bool   // enable JSON logging (default: false)
 }
 
 func DefaultConfig() Config {

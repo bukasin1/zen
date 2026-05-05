@@ -329,11 +329,15 @@ func (a *App) Run(_ string) error {
 	})
 
 	// 4. Create timeout context
-	ctx, cancel := context.WithTimeout(context.Background(), a.shutdownTimeout)
-	defer cancel()
+	shutdownCtx := rootCtx
+	if a.shutdownTimeout > 0 {
+		ctx, cancel := context.WithTimeout(rootCtx, a.shutdownTimeout)
+		shutdownCtx = ctx
+		defer cancel()
+	}
 
 	// 5. Graceful shutdown (drains active requests)
-	if err := a.server.Shutdown(ctx); err != nil {
+	if err := a.server.Shutdown(shutdownCtx); err != nil {
 		a.LogError("server shutdown failed", logger.Fields{
 			"error": err.Error(),
 		})
@@ -342,7 +346,7 @@ func (a *App) Run(_ string) error {
 	}
 
 	// 6. Run shutdown hooks AFTER draining
-	a.runShutdownHooks(ctx)
+	a.runShutdownHooks(shutdownCtx)
 
 	a.LogInfo("application shutdown complete", nil)
 
