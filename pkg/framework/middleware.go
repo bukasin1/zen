@@ -26,7 +26,14 @@ func Recovery() Middleware {
 		return func(c *Context) {
 			defer func() {
 				if rec := recover(); rec != nil {
-					if c.responseCommitted {
+					c.LogError("Request panicked", logger.Fields{
+						"path":      c.Request.URL.Path,
+						"method":    c.Request.Method,
+						"requestID": c.RequestID(),
+						"panic":     rec,
+					})
+
+					if c.responseCommitted.Load() {
 						return
 					}
 

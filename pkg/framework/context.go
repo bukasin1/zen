@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"sync/atomic"
 	"time"
 
 	frameworkErrors "github.com/Danieljosh-uduma/zen/pkg/framework/errors"
@@ -52,7 +53,7 @@ type Context struct {
 	requestID string
 	startTime time.Time
 
-	responseCommitted bool
+	responseCommitted atomic.Bool
 	afterResponse     []func(c *Context)
 
 	logger logger.Logger
@@ -132,12 +133,12 @@ func (c *Context) AfterResponse(fn func(c *Context)) {
 
 // writeResponse is a helper function to write a response to the client.
 func (c *Context) writeResponse(writeFn func() error) error {
-	if c.responseCommitted {
+	if !c.responseCommitted.CompareAndSwap(false, true) {
 		return nil
 	}
 
-	// mark as committed
-	c.responseCommitted = true
+	// // mark as committed
+	// c.responseCommitted = true
 
 	err := writeFn()
 
