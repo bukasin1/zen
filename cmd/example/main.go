@@ -2,11 +2,14 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/Danieljosh-uduma/zen/pkg/framework"
+	frameworkErrors "github.com/Danieljosh-uduma/zen/pkg/framework/errors"
 	"github.com/Danieljosh-uduma/zen/pkg/framework/logger"
 )
 
@@ -78,14 +81,14 @@ func main() {
 	// attach auth parser globally
 	app.Use(framework.AuthMiddleware(validator))
 
+	app.Use(framework.Timeout(time.Second * 2))
+
 	api := app.Group("/api")
 	api.Use(TestMiddleware)
 	v1 := api.Group("/v1")
 	v1.Use(TestMiddleware2)
 
 	api.Get("/health", func(c *framework.Context) {
-		// Simulates a 3-second operation
-		time.Sleep(3 * time.Second)
 		ct := &Context{
 			Context: c,
 		}
@@ -99,6 +102,34 @@ func main() {
 		// _ = c.JSON(200, map[string]string{
 		// 	"status": "api running",
 		// })
+	})
+
+	api.Get("/timeout", func(c *framework.Context) {
+		// Simulates a 3-second operation
+		// time.Sleep(3 * time.Second)
+		ct := &Context{
+			Context: c,
+		}
+		c.AfterResponse(func(c *framework.Context) {
+			log.Printf("Response sent: %d, %s, %s", c.StatusCode(), c.Request.URL.Path, c.Request.Method)
+		})
+
+		// _ = c.JSON(200, map[string]string{
+		// 	"status": "api running",
+		// })
+		select {
+		case <-c.Done():
+			if errors.Is(c.Err(), context.DeadlineExceeded) {
+				fmt.Println("context error in sample:", c.Err())
+				// or http.StatusGatewayTimeout
+				c.Error(http.StatusRequestTimeout, "Request timed out", frameworkErrors.ErrRequestTimeout, nil)
+			}
+		case <-time.After(3 * time.Second):
+			fmt.Println("timeout in sample:", c.Err())
+			ct.SuccessOK(map[string]string{
+				"status": "api running",
+			})
+		}
 	})
 
 	v1.Get("/posts/*", func(c *framework.Context) {

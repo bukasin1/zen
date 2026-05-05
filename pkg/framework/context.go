@@ -479,6 +479,16 @@ func (c *Context) StdContext() context.Context {
 	return c.Request.Context()
 }
 
+// Done returns the channel that is closed when the context is cancelled.
+func (c *Context) Done() <-chan struct{} {
+	return c.StdContext().Done()
+}
+
+// Err returns the error for which the context was cancelled.
+func (c *Context) Err() error {
+	return c.StdContext().Err()
+}
+
 // Set sets a value in the context.
 func (c *Context) Set(key string, value interface{}) {
 	if c.keys == nil {
