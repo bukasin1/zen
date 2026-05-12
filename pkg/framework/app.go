@@ -36,6 +36,8 @@ type App struct {
 	config     Config
 	services   map[string]*serviceEntry
 	servicesMu sync.RWMutex
+
+	RecoveryConfig RecoveryConfig
 }
 
 func New() *App {
@@ -48,6 +50,11 @@ func New() *App {
 		systemMiddlewares: []Middleware{RequestLogger(), Recovery()},
 
 		services: make(map[string]*serviceEntry),
+
+		RecoveryConfig: RecoveryConfig{
+			ExposeError:  false,
+			IncludeStack: false,
+		},
 	}
 
 	app.SetAppConfig(cfg)
@@ -273,6 +280,7 @@ func (a *App) LogDebug(msg string, fields logger.Fields) {
 func (a *App) buildAppHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := NewContext(w, r, a.logger)
+		ctx.app = a
 
 		handler := func(c *Context) {
 			a.router.ServeHTTP(c)

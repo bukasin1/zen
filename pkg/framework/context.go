@@ -45,6 +45,8 @@ type Context struct {
 	Writer  http.ResponseWriter
 	Request *http.Request
 
+	app *App
+
 	params map[string]string
 	keys   map[string]interface{}
 

@@ -3,6 +3,7 @@ package framework
 import (
 	"fmt"
 	"net/http"
+	"runtime/debug"
 	"time"
 
 	frameworkErrors "github.com/Danieljosh-uduma/zen/pkg/framework/errors"
@@ -26,28 +27,71 @@ func Recovery() Middleware {
 		return func(c *Context) {
 			defer func() {
 				if rec := recover(); rec != nil {
-					c.LogError("Request panicked", logger.Fields{
-						"path":      c.Request.URL.Path,
-						"method":    c.Request.Method,
-						"requestID": c.RequestID(),
-						"panic":     rec,
-					})
 
+					panicType, severity := classifyPanic(rec)
+
+					panicInfo := &PanicInfo{
+						Value:      rec,
+						Type:       panicType,
+						Severity:   severity,
+						StackTrace: debug.Stack(),
+						RequestID:  c.RequestID(),
+						Path:       c.Request.URL.Path,
+						Method:     c.Request.Method,
+						// Timestamp:  time.Now(),
+					}
+
+					fields := logger.Fields{
+						"path":      panicInfo.Path,
+						"method":    panicInfo.Method,
+						"requestID": panicInfo.RequestID,
+						"panic":     panicInfo.Value,
+						"panicType": panicInfo.Type,
+						"severity":  panicInfo.Severity,
+					}
+
+					if c.app.RecoveryConfig.IncludeStack {
+						fields["stackTrace"] = string(panicInfo.StackTrace)
+					}
+
+					c.LogError("Request panicked", fields)
+
+					// Cannot safely write another response.
 					if c.responseCommitted.Load() {
 						return
 					}
+
+					message := "internal server error"
+					var details any
 
 					switch err := rec.(type) {
 
 					case *frameworkErrors.AppError:
 						c.Error(err.Status, err.Message, err.Code, err.Details)
+						return
 
 					case error:
-						c.Error(500, err.Error(), frameworkErrors.ErrInternal, nil)
+
+						if c.app.RecoveryConfig.ExposeError {
+							message = err.Error()
+						}
 
 					default:
-						c.Error(500, "internal server error", frameworkErrors.ErrInternal, rec)
+						if c.app.RecoveryConfig.ExposeError {
+							message = fmt.Sprintf("panic occurred: %v", rec)
+						}
 					}
+
+					if c.app.RecoveryConfig.IncludeStack {
+						details = string(panicInfo.StackTrace)
+					}
+
+					c.Error(
+						500,
+						message,
+						frameworkErrors.ErrInternal,
+						details,
+					)
 				}
 			}()
 
