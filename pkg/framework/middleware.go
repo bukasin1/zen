@@ -38,60 +38,10 @@ func Recovery() Middleware {
 						RequestID:  c.RequestID(),
 						Path:       c.Request.URL.Path,
 						Method:     c.Request.Method,
-						// Timestamp:  time.Now(),
+						Timestamp:  time.Now(),
 					}
 
-					fields := logger.Fields{
-						"path":      panicInfo.Path,
-						"method":    panicInfo.Method,
-						"requestID": panicInfo.RequestID,
-						"panic":     panicInfo.Value,
-						"panicType": panicInfo.Type,
-						"severity":  panicInfo.Severity,
-					}
-
-					if c.app.RecoveryConfig.IncludeStack {
-						fields["stackTrace"] = string(panicInfo.StackTrace)
-					}
-
-					c.LogError("Request panicked", fields)
-
-					// Cannot safely write another response.
-					if c.responseCommitted.Load() {
-						return
-					}
-
-					message := "internal server error"
-					var details any
-
-					switch err := rec.(type) {
-
-					case *frameworkErrors.AppError:
-						c.Error(err.Status, err.Message, err.Code, err.Details)
-						return
-
-					case error:
-
-						if c.app.RecoveryConfig.ExposeError {
-							message = err.Error()
-						}
-
-					default:
-						if c.app.RecoveryConfig.ExposeError {
-							message = fmt.Sprintf("panic occurred: %v", rec)
-						}
-					}
-
-					if c.app.RecoveryConfig.IncludeStack {
-						details = string(panicInfo.StackTrace)
-					}
-
-					c.Error(
-						500,
-						message,
-						frameworkErrors.ErrInternal,
-						details,
-					)
+					c.app.panicHandler.Handle(c, panicInfo)
 				}
 			}()
 

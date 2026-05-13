@@ -38,6 +38,7 @@ type App struct {
 	servicesMu sync.RWMutex
 
 	RecoveryConfig RecoveryConfig
+	panicHandler   PanicHandler
 }
 
 func New() *App {
@@ -55,6 +56,7 @@ func New() *App {
 			ExposeError:  false,
 			IncludeStack: false,
 		},
+		panicHandler: &DefaultPanicHandler{},
 	}
 
 	app.SetAppConfig(cfg)
@@ -117,6 +119,20 @@ func (a *App) SetLoggerConfig(l LogConfig) {
 			logger.Pretty = a.config.Log.Pretty
 		}
 	}
+}
+
+// SetPanicHandler sets the panic handler for the application.
+//
+// Note:
+// If a custom panic handler is not set, the default panic handler [DefaultPanicHandler] is being used
+// A PanicHandler is expected to handle the panic and return an error.
+func (a *App) SetPanicHandler(handler PanicHandler) {
+
+	if handler == nil {
+		panic("framework: panic handler cannot be nil")
+	}
+
+	a.panicHandler = handler
 }
 
 func (a *App) SetLogger(l logger.Logger) {
