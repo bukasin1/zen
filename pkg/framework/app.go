@@ -56,10 +56,10 @@ func New() *App {
 			ExposeError:  false,
 			IncludeStack: false,
 		},
-		panicHandler: &DefaultPanicHandler{},
 	}
 
 	app.SetAppConfig(cfg)
+	app.SetPanicHandler(&DefaultPanicHandler{})
 
 	return app
 }

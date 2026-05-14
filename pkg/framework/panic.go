@@ -30,3 +30,22 @@ type PanicInfo struct {
 	Method     string
 	Timestamp  time.Time
 }
+
+type frameworkPanic struct {
+	Message string
+}
+
+func (e *frameworkPanic) Error() string {
+	return e.Message
+}
+
+func newFrameworkPanic(message string) *frameworkPanic {
+
+	if message == "" {
+		message = "framework invariant violated"
+	}
+
+	return &frameworkPanic{
+		Message: message,
+	}
+}

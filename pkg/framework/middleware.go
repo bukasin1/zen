@@ -24,6 +24,12 @@ func chainMiddlewares(h HandlerFunc, middlewares []Middleware) HandlerFunc {
 // Recovery is a middleware that recovers from panics and returns a 500 error.
 func Recovery() Middleware {
 	return func(next HandlerFunc) HandlerFunc {
+		if next == nil {
+			panic(newFrameworkPanic(
+				"middleware chain contains nil handler",
+			))
+		}
+
 		return func(c *Context) {
 			defer func() {
 				if rec := recover(); rec != nil {

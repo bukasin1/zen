@@ -14,6 +14,9 @@ func classifyPanic(rec any) (PanicType, PanicSeverity) {
 	case *frameworkErrors.AppError:
 		return PanicTypeOperational, PanicSeverityLow
 
+	case *frameworkPanic:
+		return PanicTypeFramework, PanicSeverityCritical
+
 	case runtime.Error:
 		return PanicTypeProgrammer, PanicSeverityHigh
 

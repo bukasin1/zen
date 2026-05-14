@@ -46,6 +46,15 @@ func (h *DefaultPanicHandler) Handle(c *Context, info *PanicInfo) {
 		c.Error(err.Status, err.Message, err.Code, err.Details)
 		return
 
+	case *frameworkPanic:
+		c.LogError("Framework invariant violated", logger.Fields{
+			"panic": info.Value,
+		})
+
+		if c.app.RecoveryConfig.ExposeError {
+			message = err.Error()
+		}
+
 	case error:
 		if c.app.RecoveryConfig.ExposeError {
 			message = err.Error()
