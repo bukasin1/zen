@@ -65,9 +65,9 @@
 # 🏗️ Production Core (MAKES IT REAL)
 
 ## Configuration System
-- [ ] Phase 17 — Config system
+- [x] Phase 17 — Config system
   - [x] config struct loading
-  - [ ] env-based config
+  - [x] env-based config
   - [ ] optional file support (.env / yaml)
 
 ## Concurrency-Safe Services
@@ -91,7 +91,7 @@
 - [x] Phase 21 — Request Body Limits (DoS protection)
 - [x] Phase 22 — CORS middleware
 - [x] Phase 23 — Timeout middleware
-- [ ] Phase 24 — Panic classification (operational vs programmer errors)
+- [x] Phase 24 — Panic classification (operational vs programmer errors)
 
 ## Caching Layer
 - [ ] Phase 25 — Caching system

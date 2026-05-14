@@ -42,8 +42,6 @@ type App struct {
 }
 
 func New() *App {
-	cfg := DefaultConfig()
-
 	app := &App{
 		router:      NewRouter(),
 		middlewares: []Middleware{},
@@ -58,7 +56,13 @@ func New() *App {
 		},
 	}
 
+	// load app config from environment variables
+	cfg := LoadConfigFromEnv()
+
+	// set app config
 	app.SetAppConfig(cfg)
+
+	// set default panic handler
 	app.SetPanicHandler(&DefaultPanicHandler{})
 
 	return app
@@ -72,6 +76,7 @@ func New() *App {
 // Log config Pretty default is false,
 // Log config EnableJSON default is false
 func (a *App) SetAppConfig(cfg Config) {
+	// set app config
 	if cfg.AppName != "" {
 		a.config.AppName = cfg.AppName
 	}
@@ -308,6 +313,13 @@ func (a *App) buildAppHandler() http.Handler {
 }
 
 func (a *App) Run(_ string) error {
+	// validate config
+	cfgErr := a.config.Validate()
+	if cfgErr != nil {
+		panic(newFrameworkPanic(cfgErr.Error()))
+	}
+
+	// start server
 	addr := a.config.HTTP.Addr
 	handler := a.buildAppHandler()
 	// http.ListenAndServe(addr, handler)
