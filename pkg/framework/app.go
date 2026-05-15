@@ -300,8 +300,7 @@ func (a *App) LogDebug(msg string, fields logger.Fields) {
 
 func (a *App) buildAppHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := NewContext(w, r, a.logger)
-		ctx.app = a
+		ctx := NewContext(w, r, a)
 
 		handler := func(c *Context) {
 			a.router.ServeHTTP(c)
@@ -310,6 +309,14 @@ func (a *App) buildAppHandler() http.Handler {
 		handler = a.applyMiddlewares(handler)
 		handler(ctx)
 	})
+}
+
+func (a *App) ServeHTTP(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	handler := a.buildAppHandler()
+	handler.ServeHTTP(w, r)
 }
 
 func (a *App) Run(_ string) error {
@@ -402,7 +409,7 @@ func (a *App) ListenOld(addr string) error {
 // TODO: remove this function
 func (a *App) buildAppHandlerOld() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := NewContext(w, r, a.logger)
+		ctx := NewContext(w, r, a)
 
 		handler := func(c *Context) {
 			a.router.ServeHTTPOld(c)

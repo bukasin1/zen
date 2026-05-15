@@ -64,7 +64,7 @@ type Context struct {
 	user any
 }
 
-func NewContext(w http.ResponseWriter, r *http.Request, logger logger.Logger) *Context {
+func NewContext(w http.ResponseWriter, r *http.Request, app *App) *Context {
 	rw := &responseWriter{
 		ResponseWriter: w,
 		status:         0,
@@ -84,9 +84,11 @@ func NewContext(w http.ResponseWriter, r *http.Request, logger logger.Logger) *C
 		Writer:  rw,
 		Request: r,
 
+		app: app,
+
 		requestID: requestID,
 		startTime: time.Now(),
-		logger:    logger,
+		logger:    app.logger,
 	}
 }
 
