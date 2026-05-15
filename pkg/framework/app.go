@@ -39,6 +39,8 @@ type App struct {
 
 	RecoveryConfig RecoveryConfig
 	panicHandler   PanicHandler
+
+	compiledHandler http.Handler
 }
 
 func New() *App {
@@ -311,12 +313,18 @@ func (a *App) buildAppHandler() http.Handler {
 	})
 }
 
+func (a *App) compile() {
+	a.compiledHandler = a.buildAppHandler()
+}
+
 func (a *App) ServeHTTP(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	handler := a.buildAppHandler()
-	handler.ServeHTTP(w, r)
+	if a.compiledHandler == nil {
+		a.compile()
+	}
+	a.compiledHandler.ServeHTTP(w, r)
 }
 
 func (a *App) Run(_ string) error {
@@ -326,15 +334,15 @@ func (a *App) Run(_ string) error {
 		panic(newFrameworkPanic(cfgErr.Error()))
 	}
 
-	// start server
+	// compile app router before server starts
+	a.compile()
+
 	addr := a.config.HTTP.Addr
-	handler := a.buildAppHandler()
-	// http.ListenAndServe(addr, handler)
 
 	// create server instance
 	a.server = &http.Server{
 		Addr:    addr,
-		Handler: handler,
+		Handler: a.compiledHandler,
 	}
 
 	rootCtx := context.Background()
@@ -347,6 +355,8 @@ func (a *App) Run(_ string) error {
 		return err
 	}
 
+	// start server
+	// http.ListenAndServe(addr, handler)
 	// 2. Start server in goroutine
 	go func() {
 		a.LogInfo("server starting", logger.Fields{
