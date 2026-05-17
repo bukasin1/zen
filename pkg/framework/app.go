@@ -24,6 +24,9 @@ type App struct {
 	middlewares       []Middleware
 	systemMiddlewares []Middleware
 
+	routeRegistry         []RouteDefinition
+	middlewareDefinitions []MiddlewareDefinition
+
 	logger logger.Logger
 
 	server *http.Server
@@ -156,6 +159,23 @@ func (a *App) Use(m Middleware) {
 	a.middlewares = append(a.middlewares, m)
 }
 
+// UseNamed adds a named middleware to the application.
+//
+// Note:
+// Middlewares added to an application will be applied to all handlers in the application.
+//
+// Example:
+//
+//	loggerMiddleware := framework.NamedMiddleware("logger", framework.Logger())
+//	app.UseNamed(loggerMiddleware)
+func (a *App) UseNamed(mds ...MiddlewareDefinition) {
+	for _, md := range mds {
+		a.middlewares = append(a.middlewares, md.Func)
+
+		a.middlewareDefinitions = append(a.middlewareDefinitions, md)
+	}
+}
+
 // UseSystem adds a system middleware to the application.
 //
 // Note:
@@ -163,6 +183,24 @@ func (a *App) Use(m Middleware) {
 // This function should be called by the framework itself or by extensions, not by the user.
 func (a *App) UseSystem(m Middleware) {
 	a.systemMiddlewares = append(a.systemMiddlewares, m)
+}
+
+// UseSystemNamed adds a named system middleware to the application.
+//
+// Note:
+// System middlewares are executed after regular middlewares.
+// This function should be called by the framework itself or by extensions, not by the user.
+//
+// Example:
+//
+//	loggerMiddleware := framework.NamedMiddleware("logger", framework.Logger())
+//	app.UseSystemNamed(loggerMiddleware)
+func (a *App) UseSystemNamed(mds ...MiddlewareDefinition) {
+	for _, md := range mds {
+		a.systemMiddlewares = append(a.systemMiddlewares, md.Func)
+
+		a.middlewareDefinitions = append(a.middlewareDefinitions, md)
+	}
 }
 
 // RegisterService registers a service with the application.

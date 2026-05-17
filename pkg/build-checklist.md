@@ -109,7 +109,7 @@
 # 🧪 Developer Experience (MAKES IT NICE TO USE)
 
 ## Testing Support
-- [ ] Phase 27 — Testing utilities
+- [x] Phase 27 — Testing utilities
   - test context builder
   - request simulation helpers
 

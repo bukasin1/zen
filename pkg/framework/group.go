@@ -6,6 +6,8 @@ type Group struct {
 	prefix      string
 	app         *App
 	middlewares []Middleware
+
+	middlewareDefinitions []MiddlewareDefinition
 }
 
 func (app *App) Group(prefix string) *Group {
@@ -22,7 +24,8 @@ func (g *Group) Group(prefix string) *Group {
 		prefix: g.prefix + prefix,
 		app:    g.app,
 		// pass on the parent group middlewares
-		middlewares: append([]Middleware{}, g.middlewares...),
+		middlewares:           append([]Middleware{}, g.middlewares...),
+		middlewareDefinitions: append([]MiddlewareDefinition{}, g.middlewareDefinitions...),
 	}
 }
 
@@ -31,6 +34,24 @@ func (g *Group) Group(prefix string) *Group {
 // Call this before any route definitions (Get, Post, etc).
 func (g *Group) Use(m ...Middleware) {
 	g.middlewares = append(g.middlewares, m...)
+}
+
+// UseNamed adds named middleware to the group.
+// Middlewares added to a group will be applied to all handlers in that group.
+//
+// Call this before any route definitions (Get, Post, etc).
+//
+// Example:
+//
+//	loggerMiddleware := framework.NamedMiddleware("logger", framework.Logger())
+//	api := app.Group("/api")
+//	api.UseNamed(loggerMiddleware)
+func (g *Group) UseNamed(mds ...MiddlewareDefinition) {
+	for _, md := range mds {
+		g.middlewares = append(g.middlewares, md.Func)
+
+		g.middlewareDefinitions = append(g.middlewareDefinitions, md)
+	}
 }
 
 // Route returns a new RouteBuilder for the given path.
@@ -45,6 +66,10 @@ func (g *Group) Route(path string) *RouteBuilder {
 		app:   g.app,
 		path:  g.prefix + path,
 		group: g,
+		// pass on the group middlewares
+		middlewares:           append([]Middleware{}, g.middlewares...),
+		middlewareDefinitions: append([]MiddlewareDefinition{}, g.middlewareDefinitions...),
+		metadata:              make(RouteMetadata),
 	}
 }
 
