@@ -1,5 +1,9 @@
 package framework
 
+import "strings"
+
+// cloneRouteMetadata creates a shallow copy of route metadata.
+// Nested reference values are not deeply cloned.
 func cloneRouteMetadata(metadata RouteMetadata) RouteMetadata {
 	if metadata == nil {
 		return nil
@@ -14,6 +18,9 @@ func cloneRouteMetadata(metadata RouteMetadata) RouteMetadata {
 	return cloned
 }
 
+// cloneRouteDefinition creates a safe copy of a route definition.
+// Metadata values themselves are NOT deeply cloned.
+// Nested reference types inside metadata should be treated as immutable.
 func cloneRouteDefinition(route RouteDefinition) RouteDefinition {
 	cloned := route
 
@@ -30,4 +37,8 @@ func cloneRouteDefinition(route RouteDefinition) RouteDefinition {
 	}
 
 	return cloned
+}
+
+func normalizeHTTPMethod(method string) string {
+	return strings.ToUpper(strings.TrimSpace(method))
 }
