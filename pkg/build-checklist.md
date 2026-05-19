@@ -119,7 +119,7 @@
   - [ ] OpenAPI/Swagger generation (optional)
 
 ## Performance Benchmarking
-- [ ] Phase 29 — Benchmarking tools
+- [x] Phase 29 — Benchmarking tools
   - route performance tests
   - middleware benchmarks
 
