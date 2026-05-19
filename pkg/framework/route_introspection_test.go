@@ -177,3 +177,73 @@ func TestDuplicateRouteRegistrationPanics(
 	app.Route("/users").
 		Get(func(ctx *Context) {})
 }
+
+func TestRouteMetadataHelpers(
+	t *testing.T,
+) {
+	app := New()
+
+	app.Route("/users").
+		Name("users.list").
+		Tags("Users", "Admin").
+		Summary("List users").
+		Description("Returns all users").
+		Version("v1").
+		OperationID("listUsers").
+		Deprecated().
+		Internal().
+		Get(func(ctx *Context) {})
+
+	route, found := app.RouteByName(
+		"users.list",
+	)
+
+	if !found {
+		t.Fatal("expected route")
+	}
+
+	tags := route.Tags()
+
+	if len(tags) != 2 {
+		t.Fatalf(
+			"expected 2 tags, got %d",
+			len(tags),
+		)
+	}
+
+	if route.Summary() != "List users" {
+		t.Fatal(
+			"unexpected summary",
+		)
+	}
+
+	if route.Description() != "Returns all users" {
+		t.Fatal(
+			"unexpected description",
+		)
+	}
+
+	if route.Version() != "v1" {
+		t.Fatal(
+			"unexpected version",
+		)
+	}
+
+	if route.OperationID() != "listUsers" {
+		t.Fatal(
+			"unexpected operation id",
+		)
+	}
+
+	if !route.IsDeprecated() {
+		t.Fatal(
+			"expected deprecated route",
+		)
+	}
+
+	if !route.IsInternal() {
+		t.Fatal(
+			"expected internal route",
+		)
+	}
+}
