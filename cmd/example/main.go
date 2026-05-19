@@ -57,10 +57,18 @@ func (c *Context) SuccessOK(data any) {
 func main() {
 	app := framework.New()
 
+	cfg := framework.LoadConfigFromEnv()
+
+	err := cfg.Validate()
+	if err != nil {
+		// log.Fatalf("Failed to load config: %v", err)
+	}
+
 	app.SetAppConfig(framework.Config{
 		AppName: "Zen",
 		HTTP: framework.HTTPConfig{
 			Addr: ":8080",
+			// ShutdownTimeout: time.Second * 2,
 		},
 		Log: framework.LogConfig{
 			Level:      "debug",
@@ -82,6 +90,11 @@ func main() {
 	app.Use(framework.AuthMiddleware(validator))
 
 	app.Use(framework.Timeout(time.Second * 2))
+
+	// docs endpoints
+	app.MountJSONDocs("/docs.json", framework.RouteDocOptions{IncludeInternal: true})
+	app.MountHTMLDocs("/docs.html", framework.RouteDocOptions{IncludeInternal: true})
+	// app.MountSwagger("/swagger", "zen", "1.0.0")
 
 	api := app.Group("/api")
 	api.Use(TestMiddleware)

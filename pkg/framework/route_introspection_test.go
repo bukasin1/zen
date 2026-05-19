@@ -247,3 +247,76 @@ func TestRouteMetadataHelpers(
 		)
 	}
 }
+
+func TestRouteDocs(
+	t *testing.T,
+) {
+	app := New()
+
+	app.Route("/users").
+		Name("users.list").
+		Tags("Users").
+		Summary("List users").
+		Version("v1").
+		Get(func(ctx *Context) {})
+
+	app.Route("/internal").
+		Internal().
+		Get(func(ctx *Context) {})
+
+	docs := app.RouteDocs()
+
+	if len(docs) != 1 {
+		t.Fatalf(
+			"expected 1 public route doc, got %d",
+			len(docs),
+		)
+	}
+
+	doc := docs[0]
+
+	if doc.Path != "/users" {
+		t.Fatalf(
+			"expected /users path, got %s",
+			doc.Path,
+		)
+	}
+
+	if doc.Summary != "List users" {
+		t.Fatal(
+			"unexpected summary",
+		)
+	}
+
+	if len(doc.Tags) != 1 {
+		t.Fatal(
+			"expected tags",
+		)
+	}
+}
+
+func TestRouteDocsIncludeInternal(
+	t *testing.T,
+) {
+	app := New()
+
+	app.Route("/users").
+		Get(func(ctx *Context) {})
+
+	app.Route("/internal").
+		Internal().
+		Get(func(ctx *Context) {})
+
+	docs := app.RouteDocs(
+		RouteDocOptions{
+			IncludeInternal: true,
+		},
+	)
+
+	if len(docs) != 2 {
+		t.Fatalf(
+			"expected 2 route docs, got %d",
+			len(docs),
+		)
+	}
+}

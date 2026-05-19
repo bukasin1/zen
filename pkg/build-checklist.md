@@ -114,9 +114,9 @@
   - request simulation helpers
 
 ## Documentation Generation
-- [ ] Phase 28 — Docs system
-  - route introspection
-  - OpenAPI/Swagger generation (optional)
+- [x] Phase 28 — Docs system
+  - [x] route introspection
+  - [ ] OpenAPI/Swagger generation (optional)
 
 ## Performance Benchmarking
 - [ ] Phase 29 — Benchmarking tools
