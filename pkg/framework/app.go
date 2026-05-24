@@ -338,21 +338,21 @@ func (a *App) LogDebug(msg string, fields logger.Fields) {
 	a.logger.Debug(msg, fields)
 }
 
-func (a *App) buildAppHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := NewContext(w, r, a)
-
-		handler := func(c *Context) {
-			a.router.ServeHTTP(c)
-		}
-
-		handler = a.applyMiddlewares(handler)
-		handler(ctx)
-	})
-}
-
 func (a *App) compile() {
-	a.compiledHandler = a.buildAppHandler()
+	handler := func(c *Context) {
+		a.router.ServeHTTP(c)
+	}
+
+	handler = a.applyMiddlewares(handler)
+
+	a.compiledHandler = http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+
+			ctx := NewContext(w, r, a)
+
+			handler(ctx)
+		},
+	)
 }
 
 func (a *App) ServeHTTP(
@@ -380,7 +380,7 @@ func (a *App) Run(_ string) error {
 	// create server instance
 	a.server = &http.Server{
 		Addr:    addr,
-		Handler: a.compiledHandler,
+		Handler: a,
 	}
 
 	rootCtx := context.Background()
