@@ -24,6 +24,8 @@ type App struct {
 	middlewares       []Middleware
 	systemMiddlewares []Middleware
 
+	metricsCollector MetricsCollector
+
 	routeRegistry         []RouteDefinition
 	middlewareDefinitions []MiddlewareDefinition
 
@@ -52,6 +54,8 @@ func New() *App {
 		middlewares: []Middleware{},
 		// auto install system middlewares
 		systemMiddlewares: []Middleware{RequestLogger(), Recovery()},
+
+		metricsCollector: NewInMemoryMetricsCollector(),
 
 		services: make(map[string]*serviceEntry),
 
@@ -349,6 +353,22 @@ func (a *App) compile() {
 		func(w http.ResponseWriter, r *http.Request) {
 
 			ctx := NewContext(w, r, a)
+
+			// metrics instrumentation
+			if a.metricsCollector != nil {
+				a.metricsCollector.OnRequestStart(ctx)
+			}
+
+			defer func() {
+				if a.metricsCollector != nil {
+					duration := ctx.Duration()
+
+					a.metricsCollector.OnRequestFinish(
+						ctx,
+						duration,
+					)
+				}
+			}()
 
 			handler(ctx)
 		},

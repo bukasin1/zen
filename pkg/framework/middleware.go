@@ -47,6 +47,10 @@ func Recovery() Middleware {
 						Timestamp:  time.Now(),
 					}
 
+					if c.app.metricsCollector != nil {
+						c.app.metricsCollector.OnPanic(c, *panicInfo)
+					}
+
 					c.app.panicHandler.Handle(c, panicInfo)
 				}
 			}()

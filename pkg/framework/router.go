@@ -101,9 +101,9 @@ type cacheKey struct {
 }
 
 type routeCache struct {
-	handler  HandlerFunc
-	params   map[string]string
-	redirect *redirectInfo
+	routeNode *node
+	params    map[string]string
+	redirect  *redirectInfo
 }
 
 type route struct {
@@ -259,7 +259,7 @@ func localRedirect(w http.ResponseWriter, r *http.Request, redirect *redirectInf
 	w.WriteHeader(redirect.code)
 }
 
-func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]string, bool, *redirectInfo) {
+func matchRouteTree(methodNode *node, path string) (*node, map[string]string, bool, *redirectInfo) {
 	if methodNode == nil {
 		return nil, nil, false, nil
 	}
@@ -315,7 +315,7 @@ func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]stri
 	}
 
 	if currentMethodNode.wildcardChild != nil && currentMethodNode.handler == nil && !hasTrailingSlash {
-		return currentMethodNode.wildcardChild.handler,
+		return currentMethodNode.wildcardChild,
 			params,
 			true,
 			&redirectInfo{
@@ -345,10 +345,10 @@ func matchRouteTree(methodNode *node, path string) (HandlerFunc, map[string]stri
 		}
 	}
 
-	return currentMethodNode.handler, params, true, nil
+	return currentMethodNode, params, true, nil
 }
 
-func (r *Router) FindRoute(method, path string) (HandlerFunc, map[string]string, bool, *redirectInfo) {
+func (r *Router) FindRoute(method, path string) (*node, map[string]string, bool, *redirectInfo) {
 	// normalize path to handle multiple slashes and trailing slashes
 	normalizedPath := normalizeRoutePath(path)
 
@@ -366,13 +366,13 @@ func (r *Router) FindRoute(method, path string) (HandlerFunc, map[string]string,
 		// if normalized path is different from the original path, redirect
 		// This handles cases where the original path has multiple slashes
 		if len(normalizedPath) != len(path) && cachedRoute.redirect == nil {
-			return cachedRoute.handler, cloneParams(cachedRoute.params), true, &redirectInfo{
+			return cachedRoute.routeNode, cloneParams(cachedRoute.params), true, &redirectInfo{
 				redirectPath: normalizedPath,
 				code:         http.StatusMovedPermanently,
 			}
 		}
 
-		return cachedRoute.handler, cloneParams(cachedRoute.params), true, cachedRoute.redirect
+		return cachedRoute.routeNode, cloneParams(cachedRoute.params), true, cachedRoute.redirect
 	}
 
 	methodNode, ok := r.routeTrees[method]
@@ -380,40 +380,41 @@ func (r *Router) FindRoute(method, path string) (HandlerFunc, map[string]string,
 		return nil, nil, false, nil
 	}
 
-	handler, params, ok, redirect := matchRouteTree(methodNode, normalizedPath)
-	if !ok || handler == nil {
+	routeNode, params, ok, redirect := matchRouteTree(methodNode, normalizedPath)
+	if !ok || routeNode == nil {
 		return nil, nil, false, nil
 	}
 
 	// store in cache
 	r.cacheMu.Lock()
 	r.cache[pathCacheKey] = routeCache{
-		handler:  handler,
-		params:   cloneParams(params),
-		redirect: redirect,
+		routeNode: routeNode,
+		params:    cloneParams(params),
+		redirect:  redirect,
 	}
 	r.cacheMu.Unlock()
 
 	// if normalized path is different from the original path, redirect
 	// This handles cases where the original path has multiple slashes
 	if len(normalizedPath) != len(path) && redirect == nil {
-		return handler, params, true, &redirectInfo{
+		return routeNode, params, true, &redirectInfo{
 			redirectPath: normalizedPath,
 			code:         http.StatusMovedPermanently,
 		}
 	}
 
-	return handler, params, true, redirect
+	return routeNode, params, true, redirect
 }
 
 func (r *Router) ServeHTTP(ctx *Context) {
-	if handler, params, ok, redirect := r.FindRoute(ctx.Request.Method, ctx.Request.URL.Path); ok {
+	if routeNode, params, ok, redirect := r.FindRoute(ctx.Request.Method, ctx.Request.URL.Path); ok {
 		if redirect != nil {
 			localRedirect(ctx.Writer, ctx.Request, redirect)
 			return
 		}
 		ctx.params = params
-		handler(ctx)
+		ctx.fullPath = routeNode.path
+		routeNode.handler(ctx)
 		return
 	}
 

@@ -50,6 +50,8 @@ type Context struct {
 	params map[string]string
 	keys   map[string]interface{}
 
+	fullPath string
+
 	rawBody []byte
 
 	requestID string
@@ -288,6 +290,14 @@ func (c *Context) InternalError(message string) {
 // ----------------- Response Writer Helpers End ----------
 
 // ------------------ Request Helpers ---------------
+
+// FullPath returns the full path of the request.
+// For nested routers, this will be the full path including nested router prefixes.
+//
+// Full path is the path of the route that was matched.
+func (c *Context) FullPath() string {
+	return c.fullPath
+}
 
 // Param returns the value of the route parameter with the given key.
 func (c *Context) Param(key string) string {

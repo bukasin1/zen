@@ -143,15 +143,19 @@ func (a *App) MountHTMLDocs(
 	a.Route(path).
 		Internal().
 		Get(func(ctx *Context) {
-			ctx.Writer.Header().Set(
-				"Content-Type",
-				"text/html; charset=utf-8",
-			)
+			err := ctx.writeResponse(func() error {
+				ctx.SetHeader("Content-Type", "text/html; charset=utf-8")
+				return tmpl.Execute(ctx.Writer, a.RouteDocs(options...))
+			})
+			// ctx.Writer.Header().Set(
+			// 	"Content-Type",
+			// 	"text/html; charset=utf-8",
+			// )
 
-			err := tmpl.Execute(
-				ctx.Writer,
-				a.RouteDocs(options...),
-			)
+			// err := tmpl.Execute(
+			// 	ctx.Writer,
+			// 	a.RouteDocs(options...),
+			// )
 
 			if err != nil {
 				http.Error(
