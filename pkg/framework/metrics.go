@@ -2,6 +2,7 @@ package framework
 
 import (
 	"fmt"
+	"net/http"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -331,4 +332,32 @@ func (a *App) MetricsSnapshot() MetricsSnapshot {
 	}
 
 	return a.metricsCollector.Snapshot()
+}
+
+// RegisterMetricsRoute registers the metrics endpoint.
+//
+// It adds one endpoint:
+//   - GET /metrics - Returns metrics in Prometheus format
+//
+// Note: The metrics endpoint is registered as an internal route and is not
+// visible in the generated OpenAPI documentation.
+func (a *App) RegisterMetricsRoute() {
+	a.Route("/metrics").
+		Internal().
+		Summary("Metrics endpoint").
+		Get(func(c *Context) {
+
+			if a.metricsCollector == nil {
+				c.Text(http.StatusServiceUnavailable, "metrics disabled")
+				return
+			}
+
+			snapshot := a.metricsCollector.Snapshot()
+
+			output := FormatPrometheusMetrics(snapshot)
+
+			c.SetHeader("Content-Type", "text/plain; version=0.0.4")
+
+			c.Text(http.StatusOK, output)
+		})
 }

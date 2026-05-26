@@ -99,7 +99,7 @@
   - optional Redis adapter
 
 ## Observability & Metrics
-- [ ] Phase 26 — Metrics + tracing
+- [x] Phase 26 — Metrics + tracing
   - request metrics
   - latency tracking
   - Prometheus-style hooks (optional)
@@ -123,22 +123,28 @@
   - route performance tests
   - middleware benchmarks
 
+## Runtime Operations & Health Checks
+- [x] Phase 30 — Operational routes
+  - health checks
+  - runtime info
+  - metrics
+
 ---
 
 # 🔌 Optional Power Features (ADVANCED / NOT REQUIRED)
 
 ## Dependency Injection (DELAYED ON PURPOSE)
-- [ ] Phase 30 — Dependency Injection container
+- [ ] Phase 31 — Dependency Injection container
   - constructor-based resolution
   - singleton + transient lifetimes
 
 ## Background Jobs
-- [ ] Phase 31 — Worker / job system
+- [ ] Phase 32 — Worker / job system
   - async task execution
   - queue abstraction
 
 ## Plugin Architecture
-- [ ] Phase 32 — Plugin system
+- [ ] Phase 33 — Plugin system
   - extensibility model
   - middleware/plugins registration
 
@@ -147,21 +153,21 @@
 # 🛠️ CLI & Tooling (FINAL LAYER)
 
 ## CLI Scaffolding
-- [ ] Phase 33 — CLI tool
+- [ ] Phase 34 — CLI tool
   - project generator
   - module scaffolding
 
 ## Dev Experience Tools
-- [ ] Phase 34 — Dev server + hot reload
+- [ ] Phase 35 — Dev server + hot reload
 
 ## Plugin Installer
-- [ ] Phase 35 — Plugin installer system
+- [ ] Phase 36 — Plugin installer system
 
 ---
 
 # 🚀 Production Readiness Finalization
 
-- [ ] Phase 36 — Release strategy
+- [ ] Phase 37 — Release strategy
   - versioning (semver)
   - packaging
   - deployment guidelines
