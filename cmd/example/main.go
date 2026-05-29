@@ -314,6 +314,34 @@ func main() {
 		})
 	})
 
+	app.Route("/upload").
+		Post(func(c *framework.Context) {
+
+			err := c.ParseMultipartForm(
+				10 << 20, // 10 MB
+			)
+
+			if err != nil {
+				c.BadRequest("invalid multipart form")
+				return
+			}
+
+			defer c.RemoveMultipartFiles()
+
+			file, header, err := c.FormFile("file")
+			if err != nil {
+				c.BadRequest("file is required")
+				return
+			}
+
+			defer file.Close()
+
+			c.JSON(http.StatusOK, map[string]any{
+				"filename": header.Filename,
+				"size":     header.Size,
+			})
+		})
+
 	app.OnStart(func(ctx context.Context) error {
 		// modify based on development or production
 		app.SetLogger(logger.NewDevConsoleLogger())
