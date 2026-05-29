@@ -24,6 +24,7 @@ type App struct {
 	middlewares       []Middleware
 	systemMiddlewares []Middleware
 
+	runtimeState     *RuntimeState
 	metricsCollector MetricsCollector
 
 	routeRegistry         []RouteDefinition
@@ -55,6 +56,7 @@ func New() *App {
 		// auto install system middlewares
 		systemMiddlewares: []Middleware{RequestLogger(), Recovery()},
 
+		runtimeState:     NewRuntimeState(),
 		metricsCollector: NewInMemoryMetricsCollector(),
 
 		services: make(map[string]*serviceEntry),
@@ -421,6 +423,11 @@ func (a *App) Run(_ string) error {
 			"addr": addr,
 		})
 
+		// signal that the server is ready
+		if a.runtimeState != nil {
+			a.runtimeState.SetReady(true)
+		}
+
 		if err := a.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			a.LogError("server error", logger.Fields{
 				"error": err.Error(),
@@ -445,6 +452,12 @@ func (a *App) Run(_ string) error {
 		ctx, cancel := context.WithTimeout(rootCtx, a.shutdownTimeout)
 		shutdownCtx = ctx
 		defer cancel()
+	}
+
+	// signal that the server is shutting down
+	if a.runtimeState != nil {
+		a.runtimeState.SetShuttingDown(true)
+		a.runtimeState.SetReady(false)
 	}
 
 	// 5. Graceful shutdown (drains active requests)

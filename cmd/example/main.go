@@ -96,6 +96,18 @@ func main() {
 	app.MountHTMLDocs("/docs.html", framework.RouteDocOptions{IncludeInternal: true})
 	// app.MountSwagger("/swagger", "zen", "1.0.0")
 
+	// operational routes
+	app.RegisterOperationalRoutes()
+	// app.Route("/metrics").Get(func(c *framework.Context) {
+	// 	snapshot := app.MetricsSnapshot()
+
+	// 	output := framework.FormatPrometheusMetrics(
+	// 		snapshot,
+	// 	)
+
+	// 	c.Text(http.StatusOK, output)
+	// })
+
 	api := app.Group("/api")
 	api.Use(TestMiddleware)
 	v1 := api.Group("/v1")
