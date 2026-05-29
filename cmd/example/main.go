@@ -314,16 +314,6 @@ func main() {
 		})
 	})
 
-	app.Route("/metrics").Get(func(c *framework.Context) {
-		snapshot := app.MetricsSnapshot()
-
-		output := framework.FormatPrometheusMetrics(
-			snapshot,
-		)
-
-		c.Text(http.StatusOK, output)
-	})
-
 	app.OnStart(func(ctx context.Context) error {
 		// modify based on development or production
 		app.SetLogger(logger.NewDevConsoleLogger())
