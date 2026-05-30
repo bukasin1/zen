@@ -93,23 +93,21 @@ func (c *Context) RemoveMultipartFiles() error {
 func (c *Context) SaveUploadedFile(
 	fileHeader *multipart.FileHeader,
 	dst string,
-) error {
+) (int64, error) {
 
 	src, err := fileHeader.Open()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	defer src.Close()
 
 	out, err := os.Create(dst)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	defer out.Close()
 
-	_, err = io.Copy(out, src)
-
-	return err
+	return io.Copy(out, src)
 }

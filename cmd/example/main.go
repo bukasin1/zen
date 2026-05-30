@@ -336,10 +336,39 @@ func main() {
 
 			defer file.Close()
 
+			c.SaveUploadedFile(header, header.Filename)
+
 			c.JSON(http.StatusOK, map[string]any{
 				"filename": header.Filename,
 				"size":     header.Size,
 			})
+		})
+
+	app.Route("/profile").
+		Get(func(c *framework.Context) {
+
+			response := []byte(`{"name":"john"}`)
+
+			fmt.Println("byte respone:", response)
+
+			etag := framework.GenerateETag(
+				response,
+			)
+
+			if c.IsETagMatch(etag) {
+				fmt.Println("returning not modified")
+				c.NotModified()
+				return
+			}
+
+			c.SetETag(etag)
+
+			c.SetCacheControl("private, max-age=60")
+
+			c.JSON(http.StatusOK, map[string]string{
+				"name": "john",
+			})
+			// c.JSON(http.StatusOK, response)
 		})
 
 	app.OnStart(func(ctx context.Context) error {

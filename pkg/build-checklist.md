@@ -129,25 +129,27 @@
   - runtime info
   - metrics
 
-## Multipart Form Handling
+## Before Production
 - [x] Phase 31 - Multipart Form Handling
+- [x] Phase 32 - Compression Middleware(gzip)
+- [] Phase 33 - HTTP Caching Semantics
 
 ---
 
 # 🔌 Optional Power Features (ADVANCED / NOT REQUIRED)
 
 ## Dependency Injection (DELAYED ON PURPOSE)
-- [ ] Phase 32 — Dependency Injection container
+- [ ] Phase 34 — Dependency Injection container
   - constructor-based resolution
   - singleton + transient lifetimes
 
 ## Background Jobs
-- [ ] Phase 33 — Worker / job system
+- [ ] Phase 35 — Worker / job system
   - async task execution
   - queue abstraction
 
 ## Plugin Architecture
-- [ ] Phase 34 — Plugin system
+- [ ] Phase 36 — Plugin system
   - extensibility model
   - middleware/plugins registration
 
@@ -156,21 +158,21 @@
 # 🛠️ CLI & Tooling (FINAL LAYER)
 
 ## CLI Scaffolding
-- [ ] Phase 35 — CLI tool
+- [ ] Phase 37 — CLI tool
   - project generator
   - module scaffolding
 
 ## Dev Experience Tools
-- [ ] Phase 36 — Dev server + hot reload
+- [ ] Phase 38 — Dev server + hot reload
 
 ## Plugin Installer
-- [ ] Phase 37 — Plugin installer system
+- [ ] Phase 39 — Plugin installer system
 
 ---
 
 # 🚀 Production Readiness Finalization
 
-- [ ] Phase 38 — Release strategy
+- [ ] Phase 40 — Release strategy
   - versioning (semver)
   - packaging
   - deployment guidelines
