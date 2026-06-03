@@ -47,6 +47,7 @@ type App struct {
 	panicHandler   PanicHandler
 
 	compiledHandler http.Handler
+	compileOnce     sync.Once
 }
 
 func New() *App {
@@ -377,13 +378,29 @@ func (a *App) compile() {
 	)
 }
 
+// Compile compiles the application router.
+//
+// Note:
+// This function is thread-safe and can be called multiple times.
+// The actual compilation is done in a non-concurrent safe way in the compile function
+// which is called by Compile.
+func (a *App) Compile() {
+	a.compileOnce.Do(func() {
+		a.compile()
+	})
+}
+
+// ServeHTTP implements http.Handler interface.
+//
+// Note:
+// This function will compile the application if it has not been compiled yet.
+// This is done to ensure that the application is compiled before it is served.
 func (a *App) ServeHTTP(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	if a.compiledHandler == nil {
-		a.compile()
-	}
+	a.Compile()
+
 	a.compiledHandler.ServeHTTP(w, r)
 }
 
@@ -395,7 +412,7 @@ func (a *App) Run(_ string) error {
 	}
 
 	// compile app router before server starts
-	a.compile()
+	a.Compile()
 
 	addr := a.config.HTTP.Addr
 
