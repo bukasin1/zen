@@ -132,7 +132,7 @@
 ## Before Production
 - [x] Phase 31 - Multipart Form Handling
 - [x] Phase 32 - Compression Middleware(gzip)
-- [] Phase 33 - HTTP Caching Semantics
+- [x] Phase 33 - HTTP Caching Semantics
 
 ---
 
