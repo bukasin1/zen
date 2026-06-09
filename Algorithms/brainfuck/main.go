@@ -365,6 +365,7 @@ func isAnagram(w1 string, w2 string) bool {
 }
 
 func groupAnagrams(words []string) [][]string {
+	// var groups [][]string
 	groups := [][]string{}
 
 	for _, word := range words {
@@ -386,6 +387,38 @@ func groupAnagrams(words []string) [][]string {
 	}
 
 	return groups
+}
+
+func wrapText(words []string, maxWidth int) []string {
+	// var wrapped []string
+	wrapped := []string{}
+
+	currentLine := ""
+	for _, word := range words {
+		if len(currentLine)+len(word) <= maxWidth {
+			currentLine += word
+			if len(currentLine) < maxWidth {
+				currentLine += " "
+			}
+		} else {
+			remainingWidth := maxWidth - len(currentLine)
+			for range remainingWidth {
+				currentLine += " "
+			}
+			wrapped = append(wrapped, currentLine)
+			currentLine = word + " "
+		}
+	}
+
+	if len(currentLine) > 0 {
+		remainingWidth := maxWidth - len(currentLine)
+		for range remainingWidth {
+			currentLine += " "
+		}
+		wrapped = append(wrapped, currentLine)
+	}
+
+	return wrapped
 }
 
 func main() {
@@ -453,4 +486,11 @@ func main() {
 	tt := groupAnagrams([]string{""})
 	fmt.Println(tt, len(tt), len(tt[0]), tt[0][0], len(tt[0][0]))
 	fmt.Printf("%#v\n%#v\n", tt, cc)
+
+	fmt.Println(wrapText([]string{"This", "is", "an", "example", "of", "text"}, 10))
+	fmt.Println(wrapText([]string{"a", "b", "c", "d"}, 3))
+	fmt.Println(wrapText([]string{"a"}, 1))
+	fmt.Println(wrapText([]string{"ab", "cd", "ef"}, 5))
+	fmt.Println(wrapText([]string{""}, 5))
+	fmt.Println(wrapText([]string{}, 5))
 }
