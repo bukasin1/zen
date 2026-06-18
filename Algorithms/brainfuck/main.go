@@ -418,7 +418,30 @@ func wrapText(words []string, maxWidth int) []string {
 		wrapped = append(wrapped, currentLine)
 	}
 
+	if wrapped == nil {
+		return []string{}
+	}
 	return wrapped
+}
+
+func rotateGrid(grid [][]rune) [][]rune {
+	if len(grid) == 0 || len(grid[0]) == 0 {
+		return [][]rune{}
+	}
+	// rowLen, colLen := len(grid), len(grid[0])
+	rotated := make([][]rune, len(grid[0]))
+	rotatedStr := make([][]string, len(grid[0]))
+
+	for i := len(grid) - 1; i >= 0; i-- {
+		for j, c := range grid[i] {
+			rotated[j] = append(rotated[j], c)
+			rotatedStr[j] = append(rotatedStr[j], string(c))
+		}
+	}
+
+	fmt.Println(rotatedStr)
+
+	return rotated
 }
 
 func main() {
@@ -493,4 +516,9 @@ func main() {
 	fmt.Println(wrapText([]string{"ab", "cd", "ef"}, 5))
 	fmt.Println(wrapText([]string{""}, 5))
 	fmt.Println(wrapText([]string{}, 5))
+
+	fmt.Println(rotateGrid([][]rune{{'a', 'b', 'c'}, {'d', 'e', 'f'}}))
+	fmt.Println(rotateGrid([][]rune{}))
+	fmt.Println(rotateGrid([][]rune{{'x'}}))
+	fmt.Println(rotateGrid([][]rune{{'a'}, {'b'}, {'c'}}))
 }
