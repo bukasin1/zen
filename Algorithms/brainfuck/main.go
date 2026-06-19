@@ -5,6 +5,7 @@ import (
 	"os"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -444,6 +445,40 @@ func rotateGrid(grid [][]rune) [][]rune {
 	return rotated
 }
 
+func runLengthEncode(text string) string {
+	var encoded strings.Builder
+
+	var current byte
+	var count int
+	for i := 0; i < len(text); i++ {
+		if i == 0 {
+			current = text[i]
+			count++
+			continue
+		}
+
+		if i > 0 {
+			if text[i] == text[i-1] {
+				count++
+			} else {
+				encoded.WriteByte(current)
+				countStr := strconv.Itoa(count)
+				encoded.WriteString(countStr)
+				current = text[i]
+				count = 1
+			}
+		}
+	}
+
+	if count > 0 {
+		encoded.WriteByte(current)
+		countStr := strconv.Itoa(count)
+		encoded.WriteString(countStr)
+	}
+
+	return encoded.String()
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		// fmt.Println("Usage: go run main.go <brainfuck_code>")
@@ -521,4 +556,9 @@ func main() {
 	fmt.Println(rotateGrid([][]rune{}))
 	fmt.Println(rotateGrid([][]rune{{'x'}}))
 	fmt.Println(rotateGrid([][]rune{{'a'}, {'b'}, {'c'}}))
+
+	fmt.Println(runLengthEncode(""))
+	fmt.Println(runLengthEncode("aaabbc"))
+	fmt.Println(runLengthEncode("abcd"))
+	fmt.Println(runLengthEncode("aaaaaaaaaaaa"))
 }
