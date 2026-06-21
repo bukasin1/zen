@@ -479,6 +479,99 @@ func runLengthEncode(text string) string {
 	return encoded.String()
 }
 
+func countIslands(grid [][]rune) int {
+	if len(grid) == 0 {
+		return 0
+	}
+
+	islandCount := 0
+	seenLands := make(map[string]bool)
+
+	var searchLandCells func(row, col int)
+
+	searchLandCells = func(row, col int) {
+		if row < 0 || row >= len(grid) || col < 0 || col >= len(grid[row]) {
+			return
+		}
+
+		cellLoc := strconv.Itoa(row) + "," + strconv.Itoa(col)
+
+		// if seenLands[cellLoc] || grid[row][col] != '#' {
+		// 	return
+		// }
+
+		if grid[row][col] == '#' && !seenLands[cellLoc] {
+			seenLands[cellLoc] = true
+			searchLandCells(row+1, col)
+			searchLandCells(row, col+1)
+			searchLandCells(row-1, col)
+			searchLandCells(row, col-1)
+		}
+
+	}
+
+	for row := range grid {
+		for col := range grid[row] {
+			cell := grid[row][col]
+			if cell == '#' {
+				cellLoc := strconv.Itoa(row) + "," + strconv.Itoa(col)
+				if !seenLands[cellLoc] {
+					islandCount++
+					searchLandCells(row, col)
+				}
+			}
+		}
+	}
+
+	return islandCount
+}
+
+func countIslands1(grid [][]rune) int {
+	if len(grid) == 0 {
+		return 0
+	}
+
+	rows := len(grid)
+	cols := len(grid[0])
+
+	visited := make([][]bool, rows)
+	for i := range visited {
+		visited[i] = make([]bool, cols)
+	}
+
+	var dfs func(int, int)
+
+	dfs = func(r, c int) {
+		if r < 0 || r >= rows || c < 0 || c >= cols {
+			return
+		}
+
+		if visited[r][c] || grid[r][c] != '#' {
+			return
+		}
+
+		visited[r][c] = true
+
+		dfs(r+1, c)
+		dfs(r-1, c)
+		dfs(r, c+1)
+		dfs(r, c-1)
+	}
+
+	count := 0
+
+	for r := 0; r < rows; r++ {
+		for c := 0; c < cols; c++ {
+			if grid[r][c] == '#' && !visited[r][c] {
+				count++
+				dfs(r, c)
+			}
+		}
+	}
+
+	return count
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		// fmt.Println("Usage: go run main.go <brainfuck_code>")
@@ -561,4 +654,30 @@ func main() {
 	fmt.Println(runLengthEncode("aaabbc"))
 	fmt.Println(runLengthEncode("abcd"))
 	fmt.Println(runLengthEncode("aaaaaaaaaaaa"))
+
+	// fmt.Println(countIslands([][]rune{{'#', '#', '.', '.'}, {'.', '#', '#', '.'}, {'.', '.', '#', '#'}, {'#', '.', '.', '#'}}))
+	// fmt.Println(countIslands([][]rune{
+	// 	{'#', '.', '#'},
+	// 	{'#', '.', '#'},
+	// 	{'#', '#', '#'},
+	// }))
+	// fmt.Println(countIslands([][]rune{{'.', '.', '.'}, {'.', '.', '.'}, {'.', '.', '.'}}))
+	fmt.Println(countIslands([][]rune{
+		// {},
+		{'.', '.', '.', '.', '.', '.'},
+		{'#', '#', '.', '.', '.', '.', '#'},
+		{'#', '.', '.', '.', '.', '.', '#'},
+		{'.', '.', '.', '.', '.', '.', '.'},
+		{'.', '.', '.', '.', '.', '#'},
+		{'#', '#', '.', '.', '.', '#', '.'},
+		// {'#', '.', '.', '.', '.'},
+	}))
+	fmt.Println(countIslands([][]rune{}))
+
+	// var artist struct {
+	// 	ID int `json:"id"`
+	// }
+	// json.Unmarshal([]byte(`{"id": 1}`), &artist)
+
+	// fmt.Println(artist)
 }
