@@ -673,11 +673,4 @@ func main() {
 		// {'#', '.', '.', '.', '.'},
 	}))
 	fmt.Println(countIslands([][]rune{}))
-
-	// var artist struct {
-	// 	ID int `json:"id"`
-	// }
-	// json.Unmarshal([]byte(`{"id": 1}`), &artist)
-
-	// fmt.Println(artist)
 }
