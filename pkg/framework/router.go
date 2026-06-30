@@ -116,7 +116,7 @@ type staticRoute struct {
 	handler http.Handler
 }
 
-type Router struct {
+type router struct {
 	routeTrees map[string]*node
 	cache      map[cacheKey]routeCache
 	cacheMu    sync.RWMutex
@@ -132,14 +132,14 @@ type redirectInfo struct {
 	code         int    // http status code
 }
 
-func NewRouter() *Router {
-	return &Router{
+func newRouter() *router {
+	return &router{
 		routeTrees: make(map[string]*node),
 		cache:      make(map[cacheKey]routeCache),
 	}
 }
 
-func (r *Router) Handle(method, path string, handler HandlerFunc) {
+func (r *router) Handle(method, path string, handler HandlerFunc) {
 	// invalidate route cache on new route registration
 	r.cacheMu.Lock()
 	r.cache = make(map[cacheKey]routeCache)
@@ -348,7 +348,7 @@ func matchRouteTree(methodNode *node, path string) (*node, map[string]string, bo
 	return currentMethodNode, params, true, nil
 }
 
-func (r *Router) FindRoute(method, path string) (*node, map[string]string, bool, *redirectInfo) {
+func (r *router) FindRoute(method, path string) (*node, map[string]string, bool, *redirectInfo) {
 	// normalize path to handle multiple slashes and trailing slashes
 	normalizedPath := normalizeRoutePath(path)
 
@@ -406,7 +406,7 @@ func (r *Router) FindRoute(method, path string) (*node, map[string]string, bool,
 	return routeNode, params, true, redirect
 }
 
-func (r *Router) ServeHTTP(ctx *Context) {
+func (r *router) ServeHTTP(ctx *Context) {
 	if routeNode, params, ok, redirect := r.FindRoute(ctx.Request.Method, ctx.Request.URL.Path); ok {
 		if redirect != nil {
 			localRedirect(ctx.Writer, ctx.Request, redirect)
@@ -427,7 +427,7 @@ func (r *Router) ServeHTTP(ctx *Context) {
 
 // Deprecated: meant for removal
 // TODO: (for clean up) remove this function
-func (r *Router) ServeHTTPOld(ctx *Context) {
+func (r *router) ServeHTTPOld(ctx *Context) {
 	if handler, params, ok := r.FindRouteOld(ctx.Request.Method, ctx.Request.URL.Path); ok {
 		ctx.params = params
 		handler(ctx)
@@ -460,7 +460,7 @@ func matchStaticPrefix(path, prefix string) bool {
 
 // Deprecated: use FindRoute instead
 // TODO: remove this function
-func (r *Router) FindRouteOld(method, path string) (HandlerFunc, map[string]string, bool) {
+func (r *router) FindRouteOld(method, path string) (HandlerFunc, map[string]string, bool) {
 	// normalize path to handle multiple slashes and trailing slashes
 	path = normalizeRoutePath(path)
 
@@ -516,7 +516,7 @@ func matchRoute(pattern, path string) (bool, map[string]string) {
 
 // Deprecated: use Static instead
 // TODO: remove this function
-func (r *Router) HandleStatic(prefix string, handler http.Handler) {
+func (r *router) HandleStatic(prefix string, handler http.Handler) {
 	r.staticRoutes = append(r.staticRoutes, staticRoute{
 		prefix:  prefix,
 		handler: handler,
@@ -525,7 +525,7 @@ func (r *Router) HandleStatic(prefix string, handler http.Handler) {
 
 // Deprecated: use Handle instead
 // TODO: remove this function
-func (r *Router) HandleOld(method, path string, handler HandlerFunc) {
+func (r *router) HandleOld(method, path string, handler HandlerFunc) {
 	path = normalizeRoutePath(path)
 
 	if r.routes == nil {

@@ -20,7 +20,7 @@ type serviceEntry struct {
 }
 
 type App struct {
-	router            *Router
+	router            *router
 	middlewares       []Middleware
 	systemMiddlewares []Middleware
 
@@ -52,7 +52,7 @@ type App struct {
 
 func New() *App {
 	app := &App{
-		router:      NewRouter(),
+		router:      newRouter(),
 		middlewares: []Middleware{},
 		// auto install system middlewares
 		systemMiddlewares: []Middleware{RequestLogger(), Recovery()},
