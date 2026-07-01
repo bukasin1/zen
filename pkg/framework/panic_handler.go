@@ -3,8 +3,8 @@ package framework
 import (
 	"fmt"
 
-	frameworkErrors "github.com/Danieljosh-uduma/zen/pkg/framework/errors"
-	"github.com/Danieljosh-uduma/zen/pkg/framework/logger"
+	frameworkErrors "github.com/bukasin1/zen/pkg/framework/errors"
+	"github.com/bukasin1/zen/pkg/framework/logger"
 )
 
 type PanicHandler interface {

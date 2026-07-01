@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Danieljosh-uduma/zen/pkg/framework"
-	frameworkErrors "github.com/Danieljosh-uduma/zen/pkg/framework/errors"
-	"github.com/Danieljosh-uduma/zen/pkg/framework/logger"
+	"github.com/bukasin1/zen/pkg/framework"
+	frameworkErrors "github.com/bukasin1/zen/pkg/framework/errors"
+	"github.com/bukasin1/zen/pkg/framework/logger"
 )
 
 type MyValidator struct{}

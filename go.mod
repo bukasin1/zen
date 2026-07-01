@@ -1,3 +1,3 @@
-module github.com/Danieljosh-uduma/zen
+module github.com/bukasin1/zen
 
 go 1.26.1

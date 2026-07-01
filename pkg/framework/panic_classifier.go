@@ -4,7 +4,7 @@ import (
 	"runtime"
 	"strings"
 
-	frameworkErrors "github.com/Danieljosh-uduma/zen/pkg/framework/errors"
+	frameworkErrors "github.com/bukasin1/zen/pkg/framework/errors"
 )
 
 func classifyPanic(rec any) (PanicType, PanicSeverity) {
