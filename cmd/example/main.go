@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bukasin1/zen/pkg/framework"
-	frameworkErrors "github.com/bukasin1/zen/pkg/framework/errors"
-	"github.com/bukasin1/zen/pkg/framework/logger"
+	"github.com/bukasin1/zen/pkg/zencore"
+	frameworkErrors "github.com/bukasin1/zen/pkg/zencore/errors"
+	"github.com/bukasin1/zen/pkg/zencore/logger"
 )
 
 type MyValidator struct{}
@@ -30,15 +30,15 @@ func (v *MyValidator) Validate(ctx context.Context, token string) (any, error) {
 	}, nil
 }
 
-func TestMiddleware(handler framework.HandlerFunc) framework.HandlerFunc {
-	return func(c *framework.Context) {
+func TestMiddleware(handler zencore.HandlerFunc) zencore.HandlerFunc {
+	return func(c *zencore.Context) {
 		fmt.Println("test api middleware")
 		handler(c)
 	}
 }
 
-func TestMiddleware2(handler framework.HandlerFunc) framework.HandlerFunc {
-	return func(c *framework.Context) {
+func TestMiddleware2(handler zencore.HandlerFunc) zencore.HandlerFunc {
+	return func(c *zencore.Context) {
 		fmt.Println("test api 2 middleware")
 		handler(c)
 	}
@@ -46,7 +46,7 @@ func TestMiddleware2(handler framework.HandlerFunc) framework.HandlerFunc {
 
 // custom context
 type Context struct {
-	*framework.Context
+	*zencore.Context
 }
 
 func (c *Context) SuccessOK(data any) {
@@ -55,22 +55,22 @@ func (c *Context) SuccessOK(data any) {
 }
 
 func main() {
-	app := framework.New()
+	app := zencore.New()
 
-	cfg := framework.LoadConfigFromEnv()
+	cfg := zencore.LoadConfigFromEnv()
 
 	err := cfg.Validate()
 	if err != nil {
 		// log.Fatalf("Failed to load config: %v", err)
 	}
 
-	app.SetAppConfig(framework.Config{
+	app.SetAppConfig(zencore.Config{
 		AppName: "Zen",
-		HTTP: framework.HTTPConfig{
+		HTTP: zencore.HTTPConfig{
 			Addr: ":8080",
 			// ShutdownTimeout: time.Second * 2,
 		},
-		Log: framework.LogConfig{
+		Log: zencore.LogConfig{
 			Level:      "debug",
 			Pretty:     true,
 			EnableJSON: true,
@@ -78,30 +78,30 @@ func main() {
 	})
 
 	// System middlewares are auto installed
-	// app.Use(framework.Recovery())
-	// app.Use(framework.Logger())
-	app.Use(framework.CORS(framework.DefaultCORSConfig()))
+	// app.Use(zencore.Recovery())
+	// app.Use(zencore.Logger())
+	app.Use(zencore.CORS(zencore.DefaultCORSConfig()))
 
 	validator := &MyValidator{}
 
-	rateLimiter := framework.NewRateLimiter(5, time.Second*30)
+	rateLimiter := zencore.NewRateLimiter(5, time.Second*30)
 
 	// attach auth parser globally
-	app.Use(framework.AuthMiddleware(validator))
+	app.Use(zencore.AuthMiddleware(validator))
 
-	app.Use(framework.Timeout(time.Second * 2))
+	app.Use(zencore.Timeout(time.Second * 2))
 
 	// docs endpoints
-	app.MountJSONDocs("/docs.json", framework.RouteDocOptions{IncludeInternal: true})
-	app.MountHTMLDocs("/docs.html", framework.RouteDocOptions{IncludeInternal: true})
+	app.MountJSONDocs("/docs.json", zencore.RouteDocOptions{IncludeInternal: true})
+	app.MountHTMLDocs("/docs.html", zencore.RouteDocOptions{IncludeInternal: true})
 	// app.MountSwagger("/swagger", "zen", "1.0.0")
 
 	// operational routes
 	app.RegisterOperationalRoutes()
-	// app.Route("/metrics").Get(func(c *framework.Context) {
+	// app.Route("/metrics").Get(func(c *zencore.Context) {
 	// 	snapshot := app.MetricsSnapshot()
 
-	// 	output := framework.FormatPrometheusMetrics(
+	// 	output := zencore.FormatPrometheusMetrics(
 	// 		snapshot,
 	// 	)
 
@@ -113,11 +113,11 @@ func main() {
 	v1 := api.Group("/v1")
 	v1.Use(TestMiddleware2)
 
-	api.Get("/health", func(c *framework.Context) {
+	api.Get("/health", func(c *zencore.Context) {
 		ct := &Context{
 			Context: c,
 		}
-		c.AfterResponse(func(c *framework.Context) {
+		c.AfterResponse(func(c *zencore.Context) {
 			log.Printf("Response sent: %d, %s, %s", c.StatusCode(), c.Request.URL.Path, c.Request.Method)
 		})
 
@@ -129,13 +129,13 @@ func main() {
 		// })
 	})
 
-	api.Get("/timeout", func(c *framework.Context) {
+	api.Get("/timeout", func(c *zencore.Context) {
 		// Simulates a 3-second operation
 		// time.Sleep(3 * time.Second)
 		ct := &Context{
 			Context: c,
 		}
-		c.AfterResponse(func(c *framework.Context) {
+		c.AfterResponse(func(c *zencore.Context) {
 			log.Printf("Response sent: %d, %s, %s", c.StatusCode(), c.Request.URL.Path, c.Request.Method)
 		})
 
@@ -157,7 +157,7 @@ func main() {
 		}
 	})
 
-	v1.Get("/posts/*", func(c *framework.Context) {
+	v1.Get("/posts/*", func(c *zencore.Context) {
 		_ = c.JSON(200, map[string]string{
 			"message": "posts endpoint",
 			"path":    c.Request.URL.Path,
@@ -165,20 +165,20 @@ func main() {
 		})
 	})
 
-	v1.Get("/posts/:id", func(c *framework.Context) {
+	v1.Get("/posts/:id", func(c *zencore.Context) {
 		_ = c.JSON(200, map[string]string{
 			"postId": c.Param("id"),
 			"params": fmt.Sprintf("%#v", c.Params()),
 		})
 	})
 
-	v1.Get("/users", func(c *framework.Context) {
+	v1.Get("/users", func(c *zencore.Context) {
 		_ = c.JSON(200, map[string]string{
 			"message": "users endpoint",
 		})
 	})
 
-	v1.Get("/users/:id", func(c *framework.Context) {
+	v1.Get("/users/:id", func(c *zencore.Context) {
 		fmt.Println("user id endpoint")
 		c.JSON(200, map[string]string{
 			"id":     c.Param("id"),
@@ -186,7 +186,7 @@ func main() {
 		})
 	})
 
-	v1.Get("/users/me", func(c *framework.Context) {
+	v1.Get("/users/me", func(c *zencore.Context) {
 		fmt.Println("user me endpoint")
 		c.JSON(200, map[string]string{
 			"message": "user me endpoint",
@@ -197,43 +197,43 @@ func main() {
 	app.StaticOld("/static2", "./cmd/example/static")
 	// app.Static("/", "./cmd/example/public")
 
-	app.Route("/home").Use(func(next framework.HandlerFunc) framework.HandlerFunc {
-		return func(c *framework.Context) {
+	app.Route("/home").Use(func(next zencore.HandlerFunc) zencore.HandlerFunc {
+		return func(c *zencore.Context) {
 			fmt.Println("home middleware")
 			next(c)
 		}
-	}).Get(func(c *framework.Context) {
+	}).Get(func(c *zencore.Context) {
 		c.JSON(200, map[string]string{
 			"status": "Welcome to Zen sample use!",
 		})
 	})
 
-	app.Route("/health").Use(framework.RateLimit(rateLimiter, nil)).Get(func(c *framework.Context) {
+	app.Route("/health").Use(zencore.RateLimit(rateLimiter, nil)).Get(func(c *zencore.Context) {
 		c.JSON(200, map[string]string{
 			"status": "server running",
 		})
 	})
 
 	// protected route
-	app.Route("/me").Use(framework.RequireAuth()).Get(func(c *framework.Context) {
+	app.Route("/me").Use(zencore.RequireAuth()).Get(func(c *zencore.Context) {
 		user := c.MustUser()
 		c.SuccessOK(user)
 	})
 
-	app.Post("/posts/:postId/comments/:commentId", func(c *framework.Context) {
+	app.Post("/posts/:postId/comments/:commentId", func(c *zencore.Context) {
 		c.JSON(201, map[string]string{
 			"postId":    c.Param("postId"),
 			"commentId": c.Param("commentId"),
 		})
 	})
 
-	app.Get("/users/:id", func(c *framework.Context) {
+	app.Get("/users/:id", func(c *zencore.Context) {
 		c.JSON(200, map[string]string{
 			"id": c.Param("id"),
 		})
 	})
 
-	app.Post("/posts", func(c *framework.Context) {
+	app.Post("/posts", func(c *zencore.Context) {
 		c.JSON(200, map[string]string{
 			"status": "server running post",
 		})
@@ -254,8 +254,8 @@ func main() {
 	})
 
 	app.Route("/users").
-		Use(framework.MaxBodySize(55)).
-		Post(func(c *framework.Context) {
+		Use(zencore.MaxBodySize(55)).
+		Post(func(c *zencore.Context) {
 			var req CreateUserDTO
 
 			c.MustBindAndValidate(&req)
@@ -275,7 +275,7 @@ func main() {
 			// }
 			// fmt.Println("raw body unmarshalled:", req)
 
-			cache := framework.GetService[*CreateUserDTO](app, "cache")
+			cache := zencore.GetService[*CreateUserDTO](app, "cache")
 
 			c.JSON(201, map[string]any{
 				"message": "user created",
@@ -284,25 +284,25 @@ func main() {
 			})
 		})
 
-	app.Get("/error", func(c *framework.Context) {
-		c.AfterResponse(func(c *framework.Context) {
+	app.Get("/error", func(c *zencore.Context) {
+		c.AfterResponse(func(c *zencore.Context) {
 			log.Printf("Response sent in get error: %d, %s, %s", c.StatusCode(), c.Request.URL.Path, c.Request.Method)
 		})
 		c.Fail(500, "something went wrong")
 	})
 
-	app.Get("/panic", func(c *framework.Context) {
+	app.Get("/panic", func(c *zencore.Context) {
 		panic("something went wrong get")
 	})
 
-	app.Post("/panic", func(c *framework.Context) {
-		c.AfterResponse(func(c *framework.Context) {
+	app.Post("/panic", func(c *zencore.Context) {
+		c.AfterResponse(func(c *zencore.Context) {
 			log.Printf("Response sent in post panic: %d, %s, %s", c.StatusCode(), c.Request.URL.Path, c.Request.Method)
 		})
 		panic("something went wrong post")
 	})
 
-	app.Get("/search", func(c *framework.Context) {
+	app.Get("/search", func(c *zencore.Context) {
 		query := c.Query("q")
 		page := c.QueryDefault("page", "1")
 		auth := c.Header("Authorization")
@@ -315,7 +315,7 @@ func main() {
 	})
 
 	app.Route("/upload").
-		Post(func(c *framework.Context) {
+		Post(func(c *zencore.Context) {
 
 			err := c.ParseMultipartForm(
 				10 << 20, // 10 MB
@@ -345,13 +345,13 @@ func main() {
 		})
 
 	app.Route("/profile").
-		Get(func(c *framework.Context) {
+		Get(func(c *zencore.Context) {
 
 			response := []byte(`{"name":"john"}`)
 
 			fmt.Println("byte respone:", response)
 
-			etag := framework.GenerateETag(
+			etag := zencore.GenerateETag(
 				response,
 			)
 

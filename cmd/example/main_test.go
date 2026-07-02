@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/bukasin1/zen/pkg/framework"
+	"github.com/bukasin1/zen/pkg/zencore"
 )
 
 type Response struct {
@@ -13,15 +13,15 @@ type Response struct {
 
 func TestHealthRoute(t *testing.T) {
 
-	app := framework.New()
+	app := zencore.New()
 
-	app.Get("/health", func(c *framework.Context) {
+	app.Get("/health", func(c *zencore.Context) {
 		c.JSON(http.StatusOK, map[string]string{
 			"status": "ok",
 		})
 	})
 
-	rec := framework.PerformTestRequest(
+	rec := zencore.PerformTestRequest(
 		app,
 		http.MethodGet,
 		"/health",
@@ -29,7 +29,7 @@ func TestHealthRoute(t *testing.T) {
 		nil,
 	)
 
-	resp, err := framework.DecodeJSONResponseAs[Response](rec)
+	resp, err := zencore.DecodeJSONResponseAs[Response](rec)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,17 +41,17 @@ func TestHealthRoute(t *testing.T) {
 
 func TestAuthMiddleware(t *testing.T) {
 
-	ctx, rec := framework.NewTestContext(
+	ctx, rec := zencore.NewTestContext(
 		http.MethodGet,
 		"/protected",
 		nil,
 	)
 
-	middleware := framework.RequireAuth()
+	middleware := zencore.RequireAuth()
 
 	called := false
 
-	handler := middleware(func(c *framework.Context) {
+	handler := middleware(func(c *zencore.Context) {
 		called = true
 	})
 
