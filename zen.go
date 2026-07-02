@@ -1,9 +1,11 @@
 package zen
 
 import (
-	"github.com/bukasin1/zen/pkg/zencore"
-	"github.com/bukasin1/zen/pkg/zencore/errors"
-	"github.com/bukasin1/zen/pkg/zencore/logger"
+	"net/http/httptest"
+
+	"github.com/bukasin1/zen/internal/zencore"
+	"github.com/bukasin1/zen/internal/zencore/errors"
+	"github.com/bukasin1/zen/internal/zencore/logger"
 )
 
 type (
@@ -179,6 +181,24 @@ var (
 	Timeout = zencore.Timeout
 
 	GenerateETag = zencore.GenerateETag
+
+	// PerformTestRequest performs a test request to the application.
+	// It is a helper function for testing the application.
+	//
+	// Parameters:
+	//   - app: The application to test.
+	//   - method: The HTTP method to use.
+	//   - path: The path to test.
+	//   - body: The request body to use.
+	//   - headers: The headers to use.
+	//
+	// Example:
+	//
+	//	rec := zen.PerformTestRequest(app, "GET", "/health", nil, nil)
+	PerformTestRequest = zencore.PerformTestRequest
+
+	// NewTestContext creates a new test context.
+	NewTestContext = zencore.NewTestContext
 )
 
 // GetService returns the service with the given name.
@@ -189,4 +209,8 @@ var (
 // If the service type assertion fails, it will panic.
 func GetService[T any](a *App, name string) T {
 	return zencore.GetService[T](a, name)
+}
+
+func DecodeJSONResponseAs[T any](rec *httptest.ResponseRecorder) (T, error) {
+	return zencore.DecodeJSONResponseAs[T](rec)
 }
