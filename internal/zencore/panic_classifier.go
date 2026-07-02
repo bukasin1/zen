@@ -4,7 +4,7 @@ import (
 	"runtime"
 	"strings"
 
-	frameworkErrors "github.com/bukasin1/zen/pkg/zencore/errors"
+	frameworkErrors "github.com/bukasin1/zen/internal/zencore/errors"
 )
 
 func classifyPanic(rec any) (PanicType, PanicSeverity) {

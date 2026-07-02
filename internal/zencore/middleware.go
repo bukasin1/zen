@@ -6,9 +6,9 @@ import (
 	"runtime/debug"
 	"time"
 
-	frameworkErrors "github.com/bukasin1/zen/pkg/zencore/errors"
-	"github.com/bukasin1/zen/pkg/zencore/internal/utils"
-	"github.com/bukasin1/zen/pkg/zencore/logger"
+	frameworkErrors "github.com/bukasin1/zen/internal/zencore/errors"
+	"github.com/bukasin1/zen/internal/zencore/internal/utils"
+	"github.com/bukasin1/zen/internal/zencore/logger"
 )
 
 type Middleware func(HandlerFunc) HandlerFunc

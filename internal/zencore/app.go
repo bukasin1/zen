@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/bukasin1/zen/pkg/zencore/logger"
+	"github.com/bukasin1/zen/internal/zencore/logger"
 )
 
 type serviceEntry struct {

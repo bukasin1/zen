@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bukasin1/zen/pkg/zencore/internal/utils"
+	"github.com/bukasin1/zen/internal/zencore/internal/utils"
 )
 
 type DevConsoleLogger struct{}

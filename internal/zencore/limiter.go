@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bukasin1/zen/pkg/zencore/internal/utils"
+	"github.com/bukasin1/zen/internal/zencore/internal/utils"
 )
 
 // limiterEntry holds the count and expiration time for a key.

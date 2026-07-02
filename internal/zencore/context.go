@@ -10,11 +10,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	frameworkErrors "github.com/bukasin1/zen/pkg/zencore/errors"
-	"github.com/bukasin1/zen/pkg/zencore/internal/response"
-	"github.com/bukasin1/zen/pkg/zencore/internal/utils"
-	"github.com/bukasin1/zen/pkg/zencore/internal/validator"
-	"github.com/bukasin1/zen/pkg/zencore/logger"
+	frameworkErrors "github.com/bukasin1/zen/internal/zencore/errors"
+	"github.com/bukasin1/zen/internal/zencore/internal/response"
+	"github.com/bukasin1/zen/internal/zencore/internal/utils"
+	"github.com/bukasin1/zen/internal/zencore/internal/validator"
+	"github.com/bukasin1/zen/internal/zencore/logger"
 )
 
 type contextKey string
