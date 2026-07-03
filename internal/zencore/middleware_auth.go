@@ -1,9 +1,7 @@
 package zencore
 
-import "context"
-
 type TokenValidator interface {
-	Validate(ctx context.Context, token string) (any, error)
+	Validate(ctx *Context, token string) (any, error)
 }
 
 func AuthMiddleware(validator TokenValidator) Middleware {
@@ -25,7 +23,7 @@ func AuthMiddleware(validator TokenValidator) Middleware {
 
 			token := authHeader[len(prefix):]
 
-			user, err := validator.Validate(c.StdContext(), token)
+			user, err := validator.Validate(c, token)
 			if err != nil {
 				c.Unauthorized("invalid or expired token")
 				return

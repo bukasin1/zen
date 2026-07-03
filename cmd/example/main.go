@@ -21,9 +21,11 @@ type AuthUser struct {
 	Role string `json:"role"`
 }
 
-func (v *MyValidator) Validate(ctx context.Context, token string) (any, error) {
+func (v *MyValidator) Validate(ctx *zen.Context, token string) (any, error) {
 	// decode JWT, validate signature, etc.
 	// return user struct
+
+	fmt.Println("token", token)
 
 	return AuthUser{
 		ID:   "123",
