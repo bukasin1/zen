@@ -436,7 +436,7 @@ func (a *App) Run(_ string) error {
 	// http.ListenAndServe(addr, handler)
 	// 2. Start server in goroutine
 	go func() {
-		a.LogInfo("server starting", logger.Fields{
+		a.LogInfo("server started", logger.Fields{
 			"addr": addr,
 		})
 

@@ -4,13 +4,13 @@ package zencore
 // it uses the [DefaultConfig] as a fallback
 // Environment variables are case sensitive and should be uppercase
 //
-//	APP_NAME="Application name" (default: "Zen")
+//	APP_NAME="Application name" (default: "zen-app")
 //	APP_ENV="Application environment" (default: "development")
 //	HTTP_ADDR="HTTP server address" (default: ":8080")
-//	HTTP_SHUTDOWN_TIMEOUT="HTTP server shutdown timeout" (default: 2s)
+//	HTTP_SHUTDOWN_TIMEOUT="HTTP server shutdown timeout" (default: 10s)
 //	LOG_LEVEL="Log level" (default: "debug")
-//	LOG_PRETTY="Enable pretty printing" (default: true)
-//	LOG_ENABLE_JSON="Enable JSON logging (default: true)
+//	LOG_PRETTY="Enable pretty printing" (default: false)
+//	LOG_ENABLE_JSON="Enable JSON logging (default: false)
 func LoadConfigFromEnv() Config {
 
 	cfg := DefaultConfig()
