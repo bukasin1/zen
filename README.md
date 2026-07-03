@@ -190,13 +190,15 @@ The `examples/` directory contains complete, runnable applications demonstrating
 
 | Example | Description |
 |---------|-------------|
-| `examples/hello-world` | Minimal HTTP server |
+| [`examples/basic-web-app`](examples/basic-web-app/) | Basic web application with HTML template rendering |
+| [`examples/hello-world`](examples/hello-world/) | Minimal HTTP server |
 | `examples/rest-api` | REST API with route groups, middleware, validation, and JSON responses |
-| `examples/auth` | Authentication and authorization |
-| `examples/upload` | Multipart file uploads |
+| `examples/file-upload` | Multipart file uploads |
+| `examples/production-ready` | Production-ready web application |
+<!-- | `examples/auth` | Authentication and authorization |
 | `examples/config` | Configuration loading from environment |
 | `examples/graceful-shutdown` | Graceful server shutdown |
-| `examples/observability` | Health, runtime information, and metrics endpoints |
+| `examples/observability` | Health, runtime information, and metrics endpoints | -->
 
 Each example is self-contained and can be started with:
 

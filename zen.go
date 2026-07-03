@@ -59,7 +59,7 @@ var (
 	// DefaultConfig returns a default configuration for the application.
 	DefaultConfig = zencore.DefaultConfig
 
-	// --------------- Middlewares ---------------
+	// --------------- Middlewares start ---------------
 
 	// NamedMiddleware returns a MiddlewareDefinition for the given name and middleware.
 	//
@@ -147,6 +147,9 @@ var (
 	NewRateLimiter = zencore.NewRateLimiter
 	AuthMiddleware = zencore.AuthMiddleware
 	RequireAuth    = zencore.RequireAuth
+
+	// --------------- Middlewares End ----------
+
 	// Timeout returns a middleware that injects a timeout-aware context
 	// into the request lifecycle.
 	//
@@ -180,7 +183,12 @@ var (
 	//	http.NewRequestWithContext(c.StdContext(), ...)
 	Timeout = zencore.Timeout
 
+	// GenerateETag generates an ETag header for the given body.
+	//
+	// It uses the SHA256 hash of the body to generate the ETag.
 	GenerateETag = zencore.GenerateETag
+
+	// --------------- Testing helpers ----------
 
 	// PerformTestRequest performs a test request to the application.
 	// It is a helper function for testing the application.
@@ -199,6 +207,10 @@ var (
 
 	// NewTestContext creates a new test context.
 	NewTestContext = zencore.NewTestContext
+
+	HasStatus = zencore.HasStatus
+
+	// --------------- Testing helpers End ----------
 )
 
 // GetService returns the service with the given name.
@@ -211,6 +223,39 @@ func GetService[T any](a *App, name string) T {
 	return zencore.GetService[T](a, name)
 }
 
+// ------------------------- Testing Helpers -------------------------
+
+// DecodeJSONResponse decodes the JSON response from the response recorder.
+// It is a helper function for testing the application.
+//
+// Parameters:
+//   - rec: The response recorder to decode the JSON response from.
+//   - target: The target to decode the JSON response into.
+//
+// Example:
+//
+//	res := zen.PerformTestRequest(app, "GET", "/health", nil, nil)
+//	var body map[string]any
+//	if err := zen.DecodeJSONResponse(res, &body); err != nil {
+//		t.Fatal(err)
+//	}
+func DecodeJSONResponse(rec *httptest.ResponseRecorder, target any) error {
+	return zencore.DecodeJSONResponse(rec, target)
+}
+
+// DecodeJSONResponseAs decodes the JSON response from the response recorder.
+// It is a helper function for testing the application.
+//
+// Parameters:
+//   - rec: The response recorder to decode the JSON response from.
+//
+// Example:
+//
+//	res := zen.PerformTestRequest(app, "GET", "/health", nil, nil)
+//	body, err := zen.DecodeJSONResponseAs[map[string]any](res)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
 func DecodeJSONResponseAs[T any](rec *httptest.ResponseRecorder) (T, error) {
 	return zencore.DecodeJSONResponseAs[T](rec)
 }
