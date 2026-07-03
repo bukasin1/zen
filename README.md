@@ -240,9 +240,9 @@ Detailed documentation is available in the `docs/` directory.
 | Document | Description |
 |----------|-------------|
 | [`docs/architecture.md`](docs/architecture.md) | Framework architecture and design principles |
-| `docs/routing.md` | Routing system and route groups |
-| `docs/middleware.md` | Middleware pipeline and custom middleware |
-| `docs/deployment.md` | Production deployment recommendations |
+| [`docs/routing.md`](docs/routing.md) | Routing system and route groups |
+| [`docs/middleware.md`](docs/middleware.md) | Middleware pipeline and custom middleware |
+| [`docs/deployment.md`](docs/deployment.md) | Production deployment recommendations |
 <!-- | `docs/context.md` | Request context APIs |
 | `docs/responses.md` | Response helpers |
 | `docs/validation.md` | Request binding and validation |
@@ -258,7 +258,7 @@ Detailed documentation is available in the `docs/` directory.
 
 The README provides a quick introduction. The `docs/` directory contains comprehensive reference documentation for every major subsystem.
 
-    Additional documentation will be added as Zen evolves, with each new subsystem accompanied by dedicated documentation.
+> Additional documentation will be added as Zen evolves, with each new subsystem accompanied by dedicated documentation.
 
 ## Examples
 
