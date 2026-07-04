@@ -35,7 +35,7 @@ func (s *Server) getBook(c *zen.Context) {
 			return
 		}
 
-		c.ErrorInternalError("internal server error")
+		c.ErrorInternalServer("internal server error")
 		return
 	}
 
@@ -81,7 +81,7 @@ func (s *Server) updateBook(c *zen.Context) {
 			return
 		}
 
-		c.ErrorInternalError("internal server error")
+		c.ErrorInternalServer("internal server error")
 		return
 	}
 
@@ -102,7 +102,7 @@ func (s *Server) deleteBook(c *zen.Context) {
 			return
 		}
 
-		c.ErrorInternalError("internal server error")
+		c.ErrorInternalServer("internal server error")
 		return
 	}
 

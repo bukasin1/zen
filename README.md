@@ -193,7 +193,7 @@ The `examples/` directory contains complete, runnable applications demonstrating
 | [`examples/basic-web-app`](examples/basic-web-app/) | Basic web application with HTML template rendering |
 | [`examples/hello-world`](examples/hello-world/) | Minimal HTTP server |
 | [`examples/rest-api`](examples/rest-api/) | REST API with route groups, middleware, validation, and JSON responses |
-| `examples/file-upload` | Multipart file uploads |
+| [`examples/file-server`](examples/file-server/) | File server with file upload and static file serving |
 | `examples/production-ready` | Production-ready web application |
 <!-- | `examples/auth` | Authentication and authorization |
 | `examples/config` | Configuration loading from environment |

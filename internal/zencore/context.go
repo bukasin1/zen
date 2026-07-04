@@ -283,7 +283,7 @@ func (c *Context) ErrorNotFound(message string) {
 }
 
 // InternalError writes an internal server error response with status code 500.
-func (c *Context) ErrorInternalError(message string) {
+func (c *Context) ErrorInternalServer(message string) {
 	c.Fail(http.StatusInternalServerError, message)
 }
 

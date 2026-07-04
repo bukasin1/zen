@@ -196,9 +196,9 @@ func main() {
 		})
 	})
 
-	app.Static("/static/*", "./cmd/example/static")
-	app.StaticOld("/static2", "./cmd/example/static")
-	// app.Static("/", "./cmd/example/public")
+	app.Static("/static/*", "./examples/basic-web-app/static")
+	app.StaticOld("/static2", "./examples/basic-web-app/static")
+	// app.Static("/", "./examples/basic-web-app/public")
 
 	app.Route("/home").Use(func(next zen.HandlerFunc) zen.HandlerFunc {
 		return func(c *zen.Context) {

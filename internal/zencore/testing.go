@@ -34,6 +34,18 @@ func PerformTestRequest(
 	return recorder
 }
 
+func PerformTestRequestFromRequest(
+	handler http.Handler,
+	req *http.Request,
+) *httptest.ResponseRecorder {
+
+	recorder := httptest.NewRecorder()
+
+	handler.ServeHTTP(recorder, req)
+
+	return recorder
+}
+
 // PerformTestJSONRequest performs an HTTP JSON request to the given handler.
 // This is used for testing purposes.
 func PerformTestJSONRequest(

@@ -205,6 +205,18 @@ var (
 	//	rec := zen.PerformTestRequest(app, "GET", "/health", nil, nil)
 	PerformTestRequest = zencore.PerformTestRequest
 
+	// PerformTestRequestFromRequest performs a test request to the application from a request.
+	// It is a helper function for testing the application.
+	//
+	// Parameters:
+	//   - app: The application to test.
+	//   - req: The request to test.
+	//
+	// Example:
+	//
+	// 	rec := zen.PerformTestRequestFromRequest(app, req)
+	PerformTestRequestFromRequest = zencore.PerformTestRequestFromRequest
+
 	// NewTestContext creates a new test context.
 	NewTestContext = zencore.NewTestContext
 

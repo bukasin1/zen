@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"os"
 )
 
@@ -110,4 +111,9 @@ func (c *Context) SaveUploadedFile(
 	defer out.Close()
 
 	return io.Copy(out, src)
+}
+
+// ServeFile sends the file to the client.
+func (c *Context) ServeFile(name string) {
+	http.ServeFile(c.Writer, c.Request, name)
 }
