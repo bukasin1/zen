@@ -192,7 +192,7 @@ The `examples/` directory contains complete, runnable applications demonstrating
 |---------|-------------|
 | [`examples/basic-web-app`](examples/basic-web-app/) | Basic web application with HTML template rendering |
 | [`examples/hello-world`](examples/hello-world/) | Minimal HTTP server |
-| `examples/rest-api` | REST API with route groups, middleware, validation, and JSON responses |
+| [`examples/rest-api`](examples/rest-api/) | REST API with route groups, middleware, validation, and JSON responses |
 | `examples/file-upload` | Multipart file uploads |
 | `examples/production-ready` | Production-ready web application |
 <!-- | `examples/auth` | Authentication and authorization |
@@ -200,7 +200,7 @@ The `examples/` directory contains complete, runnable applications demonstrating
 | `examples/graceful-shutdown` | Graceful server shutdown |
 | `examples/observability` | Health, runtime information, and metrics endpoints | -->
 
-Each example is self-contained and can be started with:
+Each example is self-contained, can be executed independently and can be started with:
 
 ```bash
 cd examples/<example-name>
@@ -261,25 +261,6 @@ Detailed documentation is available in the `docs/` directory.
 The README provides a quick introduction. The `docs/` directory contains comprehensive reference documentation for every major subsystem.
 
 > Additional documentation will be added as Zen evolves, with each new subsystem accompanied by dedicated documentation.
-
-## Examples
-
-The `examples/` directory contains complete, runnable applications that demonstrate common usage patterns and production-oriented framework features.
-
-Examples include:
-
-* Basic HTTP server
-* Route groups and API versioning
-* Middleware usage
-* Request validation
-* Authentication and authorization
-* Multipart file uploads
-* Static file serving
-* Configuration loading
-* Graceful shutdown
-* Metrics and operational endpoints
-
-Each example is self-contained and can be executed independently.
 
 ---
 
