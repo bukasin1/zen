@@ -156,14 +156,14 @@ func (a *App) SetLogger(l logger.Logger) {
 	a.logger = l
 }
 
-// Use adds a middleware to the application.
+// Use adds middleware to the application.
 //
 // The middleware will be executed in the order they are added.
 //
 // Note:
 // System middlewares are executed after regular middlewares.
-func (a *App) Use(m Middleware) {
-	a.middlewares = append(a.middlewares, m)
+func (a *App) Use(m ...Middleware) {
+	a.middlewares = append(a.middlewares, m...)
 }
 
 // UseNamed adds a named middleware to the application.

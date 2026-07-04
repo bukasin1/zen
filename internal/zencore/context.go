@@ -263,27 +263,27 @@ func (c *Context) SuccessCreated(data any) {
 }
 
 // BadRequest writes a bad request response with status code 400.
-func (c *Context) BadRequest(message string) {
+func (c *Context) ErrorBadRequest(message string) {
 	c.Fail(http.StatusBadRequest, message)
 }
 
 // Unauthorized writes an unauthorized response with status code 401.
-func (c *Context) Unauthorized(message string) {
+func (c *Context) ErrorUnauthorized(message string) {
 	c.Fail(http.StatusUnauthorized, message)
 }
 
 // Forbidden writes a forbidden response with status code 403.
-func (c *Context) Forbidden(message string) {
+func (c *Context) ErrorForbidden(message string) {
 	c.Fail(http.StatusForbidden, message)
 }
 
 // NotFound writes a not found response with status code 404.
-func (c *Context) NotFound(message string) {
+func (c *Context) ErrorNotFound(message string) {
 	c.Fail(http.StatusNotFound, message)
 }
 
 // InternalError writes an internal server error response with status code 500.
-func (c *Context) InternalError(message string) {
+func (c *Context) ErrorInternalError(message string) {
 	c.Fail(http.StatusInternalServerError, message)
 }
 

@@ -17,7 +17,7 @@ func AuthMiddleware(validator TokenValidator) Middleware {
 			// Expect: "Bearer <token>"
 			const prefix = "Bearer "
 			if len(authHeader) <= len(prefix) || authHeader[:len(prefix)] != prefix {
-				c.Unauthorized("invalid authorization header format")
+				c.ErrorUnauthorized("invalid authorization header format")
 				return
 			}
 
@@ -25,7 +25,7 @@ func AuthMiddleware(validator TokenValidator) Middleware {
 
 			user, err := validator.Validate(c, token)
 			if err != nil {
-				c.Unauthorized("invalid or expired token")
+				c.ErrorUnauthorized("invalid or expired token")
 				return
 			}
 
@@ -40,7 +40,7 @@ func RequireAuth() Middleware {
 	return func(next HandlerFunc) HandlerFunc {
 		return func(c *Context) {
 			if c.User() == nil {
-				c.Unauthorized("authentication required")
+				c.ErrorUnauthorized("authentication required")
 				return
 			}
 
@@ -54,12 +54,12 @@ func RequireRole(check func(user any) bool) Middleware {
 		return func(c *Context) {
 			user := c.User()
 			if user == nil {
-				c.Unauthorized("authentication required")
+				c.ErrorUnauthorized("authentication required")
 				return
 			}
 
 			if !check(user) {
-				c.Forbidden("insufficient permissions")
+				c.ErrorForbidden("insufficient permissions")
 				return
 			}
 

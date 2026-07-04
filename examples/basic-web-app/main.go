@@ -325,7 +325,7 @@ func main() {
 			)
 
 			if err != nil {
-				c.BadRequest("invalid multipart form")
+				c.ErrorBadRequest("invalid multipart form")
 				return
 			}
 
@@ -333,7 +333,7 @@ func main() {
 
 			file, header, err := c.FormFile("file")
 			if err != nil {
-				c.BadRequest("file is required")
+				c.ErrorBadRequest("file is required")
 				return
 			}
 

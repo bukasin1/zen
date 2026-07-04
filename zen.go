@@ -105,7 +105,7 @@ var (
 	DefaultCORSConfig = zencore.DefaultCORSConfig
 
 	// Recovery is a middleware that recovers from panics and returns a 500 error.
-	Recover = zencore.Recovery
+	Recovery = zencore.Recovery
 	// RequestLogger is a middleware that logs requests to the console.
 	//
 	// It logs the following information:
