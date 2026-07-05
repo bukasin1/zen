@@ -117,12 +117,14 @@ func (c *Context) Status(code int) {
 	c.Writer.WriteHeader(code)
 }
 
-// SetHeader sets the header with the given key and value.
+// SetHeader sets the response header with the given key to the new value.
+// If the header key already exists, the header value is overwritten.
 func (c *Context) SetHeader(key, value string) {
 	c.Writer.Header().Set(key, value)
 }
 
-// AddHeader adds the header with the given key and value.
+// AddHeader adds the key, value pair to the response header.
+// If the header key already exists, the value is appended to the existing value.
 func (c *Context) AddHeader(key, value string) {
 	c.Writer.Header().Add(key, value)
 }

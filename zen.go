@@ -17,6 +17,7 @@ type (
 	Logger               = logger.Logger
 	HTTPConfig           = zencore.HTTPConfig
 	LogConfig            = zencore.LogConfig
+	CORSConfig           = zencore.CORSConfig
 	MiddlewareDefinition = zencore.MiddlewareDefinition
 
 	// HandlerFunc is a function that handles an HTTP request.
@@ -57,7 +58,15 @@ var (
 	//	LOG_ENABLE_JSON="Enable JSON logging (default: true)
 	LoadConfigFromEnv = zencore.LoadConfigFromEnv
 	// DefaultConfig returns a default configuration for the application.
-	DefaultConfig = zencore.DefaultConfig
+	DefaultConfig      = zencore.DefaultConfig
+	GetEnv             = zencore.GetEnv
+	GetEnvInt          = zencore.GetEnvInt
+	GetEnvBool         = zencore.GetEnvBool
+	GetEnvDuration     = zencore.GetEnvDuration
+	MustGetEnv         = zencore.MustGetEnv
+	MustGetEnvInt      = zencore.MustGetEnvInt
+	MustGetEnvBool     = zencore.MustGetEnvBool
+	MustGetEnvDuration = zencore.MustGetEnvDuration
 
 	// --------------- Middlewares start ---------------
 
@@ -131,6 +140,8 @@ var (
 	//
 	// Important: This middleware should be placed before any middleware that reads the request body.
 	MaxBodySize = zencore.MaxBodySize
+
+	GzipCompression = zencore.GzipCompression
 	// RateLimit is a middleware that rate limits requests to a handler.
 	//
 	// It uses a custom key function to determine the key for each request.

@@ -95,6 +95,21 @@ func MustGetEnvInt(key string) int {
 	return parsed
 }
 
+func MustGetEnvBool(key string) bool {
+	value := MustGetEnv(key)
+
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
+		panic(
+			newFrameworkPanic(
+				"invalid boolean environment variable: " + key,
+			),
+		)
+	}
+
+	return parsed
+}
+
 func MustGetEnvDuration(key string) time.Duration {
 	value := MustGetEnv(key)
 

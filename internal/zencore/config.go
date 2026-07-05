@@ -11,8 +11,14 @@ type Config struct {
 }
 
 type HTTPConfig struct {
-	Addr            string        // address to bind to (default: :8080)
-	ShutdownTimeout time.Duration // seconds to wait for server shutdown (default: 10s)
+	Addr              string        // address to bind to (default: :8080)
+	ReadTimeout       time.Duration // duration to wait for request to be read
+	ReadHeaderTimeout time.Duration // duration to wait for request headers to be read
+	WriteTimeout      time.Duration // duration to wait for response to be written
+	IdleTimeout       time.Duration // duration to wait for next request
+	MaxHeaderBytes    int           // maximum number of bytes to read from request headers
+	MaxBodyBytes      int64         // maximum number of bytes to read from request body
+	ShutdownTimeout   time.Duration // seconds to wait for server shutdown (default: 10s)
 }
 
 type LogConfig struct {
