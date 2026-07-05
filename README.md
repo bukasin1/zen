@@ -449,7 +449,7 @@ The project's architecture intentionally favors simplicity over cleverness. Cont
 
 Zen is released under the MIT License.
 
-See the `LICENSE` file for the complete license text.
+See the [LICENSE](LICENSE) file for the complete license text.
 
 ---
 
