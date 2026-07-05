@@ -418,8 +418,13 @@ func (a *App) Run(_ string) error {
 
 	// create server instance
 	a.server = &http.Server{
-		Addr:    addr,
-		Handler: a,
+		Addr:              a.config.HTTP.Addr,
+		Handler:           a,
+		ReadTimeout:       a.config.HTTP.ReadTimeout,
+		ReadHeaderTimeout: a.config.HTTP.ReadHeaderTimeout,
+		WriteTimeout:      a.config.HTTP.WriteTimeout,
+		IdleTimeout:       a.config.HTTP.IdleTimeout,
+		MaxHeaderBytes:    a.config.HTTP.MaxHeaderBytes,
 	}
 
 	rootCtx := context.Background()

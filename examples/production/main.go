@@ -34,7 +34,7 @@ func newApp() *zen.App {
 
 	// Configure logging.
 	if cfg.Logging.JSON {
-		app.SetLogger(zen.NewConsoleLogger(true))
+		app.SetLogger(zen.NewConsoleLogger(cfg.Logging.JSON))
 	} else {
 		app.SetLogger(zen.NewDevConsoleLogger())
 	}
