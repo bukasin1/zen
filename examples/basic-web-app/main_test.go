@@ -41,7 +41,7 @@ func TestHealthRoute(t *testing.T) {
 
 func TestAuthMiddleware(t *testing.T) {
 
-	ctx, rec := zen.NewTestContext(
+	ctx, rec := zen.NewTestingContext(
 		http.MethodGet,
 		"/protected",
 		nil,

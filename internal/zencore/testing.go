@@ -102,7 +102,7 @@ func DecodeJSONResponseAs[T any](
 	return target, err
 }
 
-func NewTestContext(
+func NewTestingContext(
 	method string,
 	path string,
 	body []byte,
