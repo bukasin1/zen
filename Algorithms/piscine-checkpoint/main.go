@@ -35,4 +35,23 @@ func main() {
 	fmt.Println(HashCode("AB"))
 	fmt.Println(HashCode("BAC"))
 	fmt.Println(HashCode("Hello World"))
+
+	fmt.Println(FindPrevPrime(6))
+	fmt.Println(FindPrevPrime(4))
+
+	PrintMemory([10]byte{'h', 'e', 'l', 'l', 'o', 255, 21, '*'})
+
+	// The character '👋' (wave emoji) takes 4 bytes in UTF-8
+	// msg := "Hi👋!"
+
+	// fmt.Println("--- Looping by Bytes (index access) ---")
+	// for i := 0; i < len(msg); i++ {
+	// 	fmt.Printf("Byte %d: %d (as char: %c)\n", i, msg[i], msg[i])
+	// }
+
+	// fmt.Println("\n--- Looping by Runes (for range) ---")
+	// for index, runeValue := range msg {
+	// 	fmt.Printf("Rune starts at byte %d: %d (as char: %c)\n", index, runeValue, runeValue)
+	// }
+
 }
