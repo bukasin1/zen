@@ -118,7 +118,7 @@ Zen currently includes:
 
 Zen currently requires:
 
-- Go 1.24 or later
+- Go 1.26 or later
 - A supported operating system (Linux, macOS, or Windows)
 
 Zen has no external runtime dependencies.
@@ -381,7 +381,7 @@ The framework is intended for production workloads including:
 
 Zen currently supports:
 
-* Go 1.24+
+* Go 1.26+
 * Linux
 * macOS
 * Windows
