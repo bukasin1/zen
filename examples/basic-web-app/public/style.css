@@ -1,0 +1,40 @@
+body {
+    font-family: Arial;
+    background: #111;
+    color: white;
+    text-align: center;
+}
+
+.grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.card {
+    background: #222;
+    padding: 20px;
+    border-radius: 10px;
+    width: 220px;
+}
+
+.card img {
+    border-radius: 10px;
+}
+
+a {
+    color: #00d9ff;
+    text-decoration: none;
+}
+
+.concerts {
+    display: flex;
+    justify-content: center;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 10px;
+}

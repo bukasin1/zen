@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zen File Server Example</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Zen File Server</h1>
+
+    <p>
+        Upload a file using the form below.
+        Uploaded files will be available immediately under
+        <code>/uploads/&lt;filename&gt;</code>.
+    </p>
+
+    <form
+        action="/upload"
+        method="POST"
+        enctype="multipart/form-data">
+
+        <input
+            type="file"
+            name="file"
+            required>
+
+        <button type="submit">
+            Upload File
+        </button>
+
+    </form>
+
+</div>
+
+</body>
+</html>

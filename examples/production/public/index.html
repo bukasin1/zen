@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zen Production Example</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+    <main class="container">
+
+        <h1>Zen Production Example</h1>
+
+        <p>
+            The application is running successfully.
+        </p>
+
+        <p>
+            This example demonstrates a production-oriented Zen application with
+            configuration, middleware, graceful shutdown, logging and operational
+            endpoints.
+        </p>
+
+        <h2>Available Endpoints</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Method</th>
+                    <th>Endpoint</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                <tr>
+                    <td>GET</td>
+                    <td><a href="/api/hello"><code>/api/hello</code></a></td>
+                    <td>Sample API endpoint</td>
+                </tr>
+
+                <tr>
+                    <td>GET</td>
+                    <td><a href="/health/ready"><code>/health/ready</code></a></td>
+                    <td>Readiness check</td>
+                </tr>
+
+                <tr>
+                    <td>GET</td>
+                    <td><a href="/health/live"><code>/health/live</code></a></td>
+                    <td>Liveness check</td>
+                </tr>
+
+                <tr>
+                    <td>GET</td>
+                    <td><a href="/metrics"><code>/metrics</code></a></td>
+                    <td>Application metrics</td>
+                </tr>
+
+                <tr>
+                    <td>GET</td>
+                    <td><a href="/runtime/info"><code>/runtime/info</code></a></td>
+                    <td>Runtime information</td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </main>
+
+</body>
+
+</html>

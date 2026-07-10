@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Groupie Tracker</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+    <h1>Groupie Tracker</h1>
+
+    <!-- <form method="POST" action="/refresh" style="margin-top:20px;">
+        <button type="submit">Refresh Data</button>
+    </form> -->
+    <a href="/refresh"><button type="submit" onclick="this.disabled=true; this.innerText='Refreshing...'">Refresh
+            Data</button></a>
+
+    <form method="GET" action="/">
+        <input type="text" name="search" placeholder="Search artists">
+        <button type="submit">Search</button>
+    </form>
+
+    <p id="progress"></p>
+
+    {{if .Message}}
+    <p style="color: yellow;">{{.Message}}</p>
+    {{end}}
+    <div class="grid">
+
+        {{range .Artists}}
+
+        <div class="card">
+
+            <img src="{{.Image}}" width="200">
+
+            <h3>{{.Name}}</h3>
+
+            <p>Founded: {{.CreationDate}}</p>
+
+            <a href="/artist/{{.ID}}">View Details</a>
+
+        </div>
+
+        {{end}}
+
+    </div>
+
+
+
+    <script>
+        const evt = new EventSource("/events");
+
+        evt.onmessage = function (event) {
+            console.log("event????", event)
+            document.getElementById("progress").innerText = event.data;
+        };
+    </script>
+
+</body>
+
+</html>
